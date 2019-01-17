@@ -7,4 +7,13 @@ using StationXML, Test
             @test StationXML.xml_escape(s′) == s
         end
     end
+
+    @testset "Name transform" begin
+        let f = StationXML.transform_name
+            @test f("Module") == :module_name
+            @test f("ModuleURI") == :module_uri
+            @test f("Email") == :email
+            @test f("SelectedNumberChannels") == :selected_number_channels
+        end
+    end
 end

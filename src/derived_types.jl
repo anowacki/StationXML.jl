@@ -60,3 +60,14 @@ end
 	 instruments."
     resource_id::M{String} = missing
 end
+
+"An operating agency and associated contact persons. If
+there multiple operators, each one should be encapsulated within an
+Operator tag. Since the Contact element is a generic type that
+represents any contact person, it also has its own optional Agency
+element."
+@with_kw struct Operator
+    agency::Vector{String} = String[]
+    contact::Vector{Person} = Person[]
+    web_site::M{String} = missing
+end

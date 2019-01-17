@@ -1,4 +1,5 @@
 # Utility functions
+
 """
     transform_name(s::AbstractString) -> s′::Symbol
 
@@ -15,8 +16,9 @@ julia> transform_name(name)
 ```
 """
 function transform_name(s)
+    s = string(s)
     # CamelCase to Camel_Case
-    s = replace(s, r"([a-z])([A-Z])"=>s"\1_\_2")
+    s = replace(s, r"([a-z])([A-Z])"=>s"\1_\2")
     # lowercase
     s = lowercase(s)
     # Special cases

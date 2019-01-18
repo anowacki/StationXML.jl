@@ -4,6 +4,7 @@ Read FDSN StationXML-format files describing seismic stations.
 
 [![Build Status](https://travis-ci.org/anowacki/StationXML.jl.svg?branch=master)](https://travis-ci.org/anowacki/StationXML.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/qjedw1iel0d4vhh4?svg=true)](https://ci.appveyor.com/project/AndyNowacki/stationxml-jl)
+[![Coverage Status](https://coveralls.io/repos/github/anowacki/StationXML.jl/badge.svg?branch=master)](https://coveralls.io/github/anowacki/StationXML.jl?branch=master)
 
 The package mostly follows the [FDSN schema](https://www.fdsn.org/xml/station/fdsn-station-1.0.xsd), with some lesser-used field currently ignored.  It should read any
 schema-compatible StationXML file without error, but bug reports

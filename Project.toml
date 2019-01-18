@@ -3,6 +3,9 @@ uuid = "bc702e9c-26b7-573b-a57f-23300c0e5013"
 authors = ["Andy Nowacki <a.nowacki@leeds.ac.uk>"]
 version = "0.1.0"
 
+[compat]
+julia = "1.0"
+
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 EzXML = "8f5d6c58-4d21-5cfd-889c-e3ad7ee6a615"

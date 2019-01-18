@@ -6,15 +6,36 @@ Equivalent to SEED blockette 52 and parent element for the related the response 
 """
 @with_kw struct Channel
     @BaseNode
+    "URI of any type of external report, such as data quality reports."
     external_reference::Vector{ExternalReference} = ExternalReference[]
+    "Latitude coordinate of this channel's sensor."
     latitude::Float64
+    "Longitude coordinate of this channel's sensor."
     longitude::Float64
+    "Elevation of the sensor."
     elevation::Float64
+    "The local depth or overburden of the instrument's location. For downhole
+     instruments, the depth of the instrument under the surface ground level.
+     For underground vaults, the distance from the instrument to the local ground level above."
     depth::Float64
+    "Azimuth of the sensor in degrees from north, clockwise."
     azimuth::M{Float64} = missing
+    "Dip of the instrument in degrees, down from horizontal"
     dip::M{Float64} = missing
+    "The type of data this channel collects. Corresponds to
+     channel flags in SEED blockette 52. The SEED volume producer could
+     use the first letter of an Output value as the SEED channel flag."
     type::Vector{String} = String[]
+    "The storage format of the recorded data (e.g. SEED)."
     storage_format::M{String} = missing
+    "A tolerance value, measured in seconds per sample, used as a threshold for time
+     error detection in data from the channel."
+    clock_drift::M{Float64} = missing
+    calibration_units::M{Units} = missing
+    sensor::M{Equipment} = missing
+    pre_amplifier::M{Equipment} = missing
+    equipment::M{Equipment} = missing
+    response::M{Response} = missing
     location_code::String
 end
 

@@ -89,6 +89,18 @@ end
     author::Vector{Person} = Person[]
 end
 
+"""Sample rate expressed as number of samples in a number of seconds."""
+@with_kw struct SampleRateRatio
+    number_samples::Float64
+    number_seconds::Float64
+end
+
+"""Complex numbers used as poles or zeros in channel response."""
+@with_kw struct PoleZero
+    real::Float64
+    imaginary::Float64
+end
+
 @with_kw struct RestrictedStatus
     value::String
     function RestrictedStatus(value)
@@ -98,37 +110,37 @@ end
     end
 end
 
-"A type to document units.  Corresponds to SEED blockette 34."
+"""A type to document units.  Corresponds to SEED blockette 34."""
 @with_kw struct Units
     name::String
     "Name of units, e.g. \"Velocity in meters per second\", \"Volts\", \"Pascals\"."
     description::M{String} = missing
 end
 
-"The BaseFilterType is derived by all filters"
-@with_kw struct BaseFilter
+# """The BaseFilterType is derived by all filters"""
+@pour BaseFilter begin
+    # @pour creates a macro, @BaseFilter, with which to insert the contents later
+    # to mix in the following fields.  Declare like:
+    #   struct X @BaseFilter; f1; f2 end
     description::M{String} = missing
-    "The units of the data as input from the perspective of data
-     acquisition. After correcting data for this response, these would be the
-     resulting units."
+    # "The units of the data as input from the perspective of data
+    #  acquisition. After correcting data for this response, these would be the
+    #  resulting units."
     input_units::Units
-    "The units of the data as output from the perspective of data
-     acquisition. These would be the units of the data prior to correcting for
-     this response."
+    # "The units of the data as output from the perspective of data
+    #  acquisition. These would be the units of the data prior to correcting for
+    #  this response."
     output_units::Units
-    "Same meaning as Equipment.resource_id"
+    # "Same meaning as Equipment.resource_id"
     resource_id::M{String} = missing
-    "A name given to this filter."
-    name::String
+    # "A name given to this filter."
+    name::M{String} = missing
 end
 
 # """
 # A base node type for derivation from: Network, Station and Channel types.
 # """
 @pour BaseNode begin
-    # @pour creates a macro, @BaseNode, with which to insert the contents later
-    # to mix in the following fields.  Declare like:
-    #   struct X @BaseNode; f1; f2 end
     description::M{String} = missing
     comment::Vector{Comment} = Comment[]
     code::String

@@ -14,6 +14,8 @@ using StationXML, Test
             @test f("ModuleURI") == :module_uri
             @test f("Email") == :email
             @test f("SelectedNumberChannels") == :selected_number_channels
+            @test f("FrequencyRangeGroup") == :frequency_range
+            @test f("AbcGroup") == :abc
         end
     end
 end

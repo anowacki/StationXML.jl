@@ -17,6 +17,8 @@ julia> transform_name(name)
 """
 function transform_name(s)
     s = string(s)
+    # Remove 'Group'
+    s = replace(s, r"Group$"=>"")
     # CamelCase to Camel_Case
     s = replace(s, r"([a-z])([A-Z])"=>s"\1_\2")
     # lowercase

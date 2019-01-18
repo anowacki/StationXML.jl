@@ -39,7 +39,7 @@ end
 
 Return `true` if `xml` appears to be a StationXML file.
 """
-xml_is_station_xml(xml) = EzXML.hasroot(xml) && xml.root.name == "FDSNStationXML"    
+xml_is_station_xml(xml) = EzXML.hasroot(xml) && xml.root.name == "FDSNStationXML"
 
 """
     schema_version_is_okay(xml::EzXML.Document) -> ::Bool
@@ -65,34 +65,50 @@ const ParsableTypes = Union{Type{String},Type{Float64},Type{Int}}
 parse_node(T::ParsableTypes, node::EzXML.Node) = local_parse(T, node.content)
 parse_node(T::Type{DateTime}, node::EzXML.Node) = DateTime(node.content)
 
-"Enumeration types, which here have only a field `value`"
-const EnumTypes = Union{Type{RestrictedStatus},Type{Nominal}}
-parse_node(T::EnumTypes, node::EzXML.Node) = T(node.content)
+"Enumeration types, which here have only a field `value::String`"
+const StringEnumTypes = Union{Type{RestrictedStatus},Type{Nominal}}
+parse_node(T::StringEnumTypes, node::EzXML.Node) = T(node.content)
+
+"Types with a value field and attributes"
+const ValueFieldType = Union{Type{NumeratorCoefficient},Type{Coefficient}}
+parse_node(T::ValueFieldType, node::EzXML.Node) = parse_node(T, node, value=node.content)
 
 """
-    parse_node(T, node::EzXML.Node) -> ::T
+    parse_node(T, node::EzXML.Node; value=nothing) -> ::T
 
 Create a type `T` from the StationXML module from an XML `node`.
+
+If `value` is not `nothing`, then this node represents one of $ValueFieldType.
 """
-function parse_node(T, node::EzXML.Node)
+function parse_node(T, node::EzXML.Node; value=nothing)
     VERBOSE[] && println("\n===\nParsing node type $T\n===")
-    # @show T, typeof(T)
+    # Value field types have extra attributes
+    is_value_field = Type{T} <: ValueFieldType
+    VERBOSE[] && println("$T is a value field: $is_value_field")
     # Arguments to the keyword constructor of the type T
     args = Dict{Symbol,Any}()
     all_elements = attributes_and_elements(node)
     all_names = transform_name.([e.name for e in all_elements])
     VERBOSE[] && println("Element names: $all_names")
+    VERBOSE[] && println("Field names: $(fieldnames(T))")
     # Fill in the field
     for field in fieldnames(T)
         field_type = fieldtype(T, field)
         VERBOSE[] && @show field, T, field_type
-        field in all_names || continue # Skip fields not in our types
-        elm = all_elements[findfirst(isequal(field), all_names)]
+        # Skip fields not in our types
+        field in all_names ||
+            # Types with a `value` field with the same name as the upper field would
+            # fail the test without `field == :value`
+            (is_value_field && field == :value) ||
+            continue
+        if !(is_value_field && field == :value)
+            elm = all_elements[findfirst(isequal(field), all_names)]
+        end
         # Unions are Missing-supporting fields; should only every have two types
-        VERBOSE[] && @show field_type isa Union
         if field_type isa Union
+            VERBOSE[] && println("Field $field is a Union type")
             union_types = Base.uniontypes(field_type)
-            @assert length(union_types) == 2
+            @assert length(union_types) == 2 && Missing in union_types
             field_type = union_types[1] == Missing ? union_types[2] : union_types[1]
             VERBOSE[] && println("Field type is $field_type")
             args[field] = parse_node(field_type, elm)
@@ -108,10 +124,16 @@ function parse_node(T, node::EzXML.Node)
             end
             args[field] = values
             VERBOSE[] && println("\n   Saving $field as $values")
+        # The value field of a ValueFieldType
+        elseif field == :value && is_value_field
+            @assert value !== nothing
+            VERBOSE[] && println("Value of field is $(repr(value))")
+            args[field] = local_parse(field_type, value)
+            VERBOSE[] && println("\n   Saving $field as $(repr(args[field]))")
         # Just one (maybe optional) field
         else
             args[field] = parse_node(field_type, elm)
-            VERBOSE[] && println("\n   Saving $field as $(args[field])")
+            VERBOSE[] && println("\n   Saving $field as $(repr(args[field]))")
         end
     end
     T(; args...)

@@ -38,7 +38,7 @@ end
 @with_kw struct Email
     value::String
     function Email(value)
-        occursin(r"^[\w\.\-_]+@[\w\.\-_]+$") ||
+        occursin(r"^[\w\.\-_]+@[\w\.\-_]+$", value) ||
             throw(ArgumentError("email address not in correct form"))
         new(value)
     end

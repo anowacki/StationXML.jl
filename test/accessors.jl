@@ -26,5 +26,10 @@ let sxml = StationXML.read(datafile)
             @test stations(sxml).code == ["JSA"]
             @test channels(sxml).code == ["BHE", "BHN", "BHZ", "HHE", "HHN", "HHZ"]
         end
+
+        @testset "Channel codes" begin
+            @test channel_codes(sxml) == channel_codes(sxml.network[1])
+            @test channel_codes(sxml) == ["GB.JSA..BHE", "GB.JSA..BHN", "GB.JSA..BHZ", "GB.JSA..HHE", "GB.JSA..HHN", "GB.JSA..HHZ"]
+        end
     end
 end

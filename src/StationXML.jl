@@ -77,25 +77,25 @@ julia> [s.code for s in stations(sxml)]
  "BIGH"
  "CCA1"
  "CLGH"
- "CWF" 
+ "CWF"
  "DRUM"
- "DYA" 
- "EDI" 
+ "DYA"
+ "EDI"
  "EDMD"
  "ELSH"
- "ESK" 
+ "ESK"
  "FOEL"
  "GAL1"
  "HMNX"
- "HPK" 
- "HTL" 
+ "HPK"
+ "HTL"
  "IOMK"
- "JSA" 
+ "JSA"
  "KESW"
- "KPL" 
+ "KPL"
  "LBWR"
- "LMK" 
- "LRW" 
+ "LMK"
+ "LRW"
  "MCH1"
  "SOFL"
  "STNC"
@@ -126,6 +126,8 @@ julia> stations(gb)
 ...
 ```
 
+The `channel_codes` function returns a list of all of the channel codes within
+a `FDSNStationXML` document or a `Network`.
 
 ## Dot-access to arrays of objects
 
@@ -139,7 +141,7 @@ julia> stations(sxml).code
  "BIGH"
  "CCA1"
  "CLGH"
- "CWF" 
+ "CWF"
 ...
 ```
 
@@ -148,9 +150,9 @@ We can equally access any other field of the items this way:
 ```julia
 julia> channels(sxml).longitude
 84-element Array{Float64,1}:
- -3.9087  
- -3.9087  
- -3.9087  
+ -3.9087
+ -3.9087
+ -3.9087
  -5.227299
  -5.227299
  -5.227299

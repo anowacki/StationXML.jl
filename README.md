@@ -141,6 +141,9 @@ julia> stations(gb)
 ...
 ```
 
+The `channel_codes` function returns a list of all of the channel codes within
+a `FDSNStationXML` document or a `Network`.
+
 
 ## Dot-access to arrays of objects
 

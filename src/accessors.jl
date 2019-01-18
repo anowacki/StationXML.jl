@@ -33,6 +33,13 @@ Base.getproperty(net::AbstractArray{Network}, f::Symbol) = getfield.(net, f)
 Base.getproperty(sta::AbstractArray{Station}, f::Symbol) = getfield.(sta, f)
 Base.getproperty(cha::AbstractArray{Channel}, f::Symbol) = getfield.(cha, f)
 
+"""
+    channel_codes(network) -> ::Vector{String}
+    channel_codes(stationxml) -> ::Vector{String}
+
+Return a list of the channel codes of all the channels within
+a `network` or `stationxml` document.
+"""
 function channel_codes(network::Network)
     cha_codes = String[]
     net = network.code
@@ -46,3 +53,5 @@ function channel_codes(network::Network)
     end
     cha_codes
 end
+
+channel_codes(sxml::FDSNStationXML) = reduce(vcat, channel_codes.(networks(sxml)))

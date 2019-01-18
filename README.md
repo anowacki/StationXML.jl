@@ -61,7 +61,7 @@ XML, and what the network code is, you can do:
 julia> for net in sxml.network
            println(net.code, ": ", net.total_number_stations, " stations")
        end
-29
+BG: 29 stations
 ```
 
 To get a vector of the station codes in the one network (GB) returned in our request:

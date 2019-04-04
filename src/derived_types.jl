@@ -167,11 +167,6 @@ frequency or within a range of frequencies. """
     instrument_polynomial::M{Polynomial} = missing
     stage::Vector{ResponseStage} = ResponseStage[]
     resource_id::M{String} = missing
-    function Response(instrument_sensitivity, instrument_polynomial, stage, resource_id)
-        count(!ismissing, (instrument_sensitivity,instrument_polynomial)) == 1 ||
-            throw(ArgumentError("Only one of instrument sensitivity or polynomial must be give"))
-        new(instrument_sensitivity, instrument_polynomial, stage, resource_id)
-    end
 end
 
 "An operating agency and associated contact persons. If

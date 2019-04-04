@@ -144,8 +144,8 @@ end
     description::M{String} = missing
     comment::Vector{Comment} = Comment[]
     code::String
-    start_date::DateTime
-    end_date::DateTime
+    start_date::M{DateTime} = missing
+    end_date::M{DateTime} = missing
     restricted_status::M{RestrictedStatus} = missing
     # "A code used for display or association, alternate to the SEED-compliant code."
     alternate_code::M{String} = missing

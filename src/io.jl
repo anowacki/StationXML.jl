@@ -63,7 +63,18 @@ parse_node(root::EzXML.Node) = parse_node(FDSNStationXML, root)
 "Types which can be directly parsed from a Node"
 const ParsableTypes = Union{Type{String},Type{Float64},Type{Int}}
 parse_node(T::ParsableTypes, node::EzXML.Node) = local_parse(T, node.content)
-parse_node(T::Type{DateTime}, node::EzXML.Node) = DateTime(node.content)
+# Handle dates with greater than millisecond precision by truncating to nearest millisecond,
+# cope with UTC time zone information (ends with 'Z'), and convert non-UTC time zones to UTC
+function parse_node(T::Type{DateTime}, node::EzXML.Node)
+    # Remove sub-millisecond intervals
+    m = match(r"(.*T..:..:..[\.]?)([0-9]{0,3})[0-9]*([-+Z].*)*", node.content)
+    dt = DateTime(m.captures[1] * m.captures[2]) # Local date to ms
+    (isnothing(m.captures[3]) || m.captures[3] in ("", "Z", "+00:00", "-00:00")) && return dt # UTC
+    pm = m.captures[3][1] # Whether ahead or behind UTC
+    offset = Time(m.captures[3][2:end]) - Time("00:00")
+    dt = pm == '+' ? dt + offset : dt - offset
+    dt
+end
 
 "Enumeration types, which here have only a field `value::String`"
 const StringEnumTypes = Union{Type{RestrictedStatus},Type{Nominal}}

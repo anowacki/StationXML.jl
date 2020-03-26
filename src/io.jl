@@ -46,9 +46,21 @@ xml_is_station_xml(xml) = EzXML.hasroot(xml) && xml.root.name == "FDSNStationXML
 
 Return `true` if this XML document is of the correct version.
 
-Currently supported is only v1.0 of the FDSN specification.
+Currently fully supported is only v1.0 of the FDSN specification.
+StationXML will parse v1.1 files, but ignore the additional information
+provided in the new version.
 """
-schema_version_is_okay(xml::EzXML.Document) = xml.root["schemaVersion"] == "1.0"
+function schema_version_is_okay(xml::EzXML.Document)
+    version = VersionNumber(xml.root["schemaVersion"])
+    if version == v"1.0"
+        return true
+    elseif version == v"1.1"
+        @warn("document is StationXML version $version; only v1.0 data will be read")
+        return true
+    else
+        return false
+    end
+end
 
 attributes_and_elements(node::EzXML.Node) = vcat(EzXML.attributes(node), EzXML.elements(node))
 
@@ -81,7 +93,7 @@ const StringEnumTypes = Union{Type{RestrictedStatus},Type{Nominal}}
 parse_node(T::StringEnumTypes, node::EzXML.Node) = T(node.content)
 
 "Types with a value field and attributes"
-const ValueFieldType = Union{Type{NumeratorCoefficient},Type{Coefficient}}
+const ValueFieldType = Union{Type{Distance},Type{NumeratorCoefficient},Type{Coefficient}}
 parse_node(T::ValueFieldType, node::EzXML.Node) = parse_node(T, node, value=node.content)
 
 """
@@ -99,7 +111,7 @@ function parse_node(T, node::EzXML.Node; value=nothing)
     # Arguments to the keyword constructor of the type T
     args = Dict{Symbol,Any}()
     all_elements = attributes_and_elements(node)
-    all_names = transform_name.([e.name for e in all_elements])
+    all_names = [transform_name(e.name) for e in all_elements]
     VERBOSE[] && println("Element names: $all_names")
     VERBOSE[] && println("Field names: $(fieldnames(T))")
     # Fill in the field
@@ -152,5 +164,7 @@ end
 
 # Version of parse which accepts String as the type.
 # Don't define this for Base as this is type piracy.
-local_tryparse(T::DataType, s::AbstractString) where S = T <: AbstractString ? s : tryparse(T, s)
-local_parse(T::DataType, s::AbstractString) where S = T <: AbstractString ? s : parse(T, s)
+local_tryparse(T::Type{<:AbstractString}, s::AbstractString) = s
+local_tryparse(T::DataType, s::AbstractString) = tryparse(T, s)
+local_parse(T::Type{<:AbstractString}, s::AbstractString) = s
+local_parse(T::DataType, s::AbstractString) = parse(T, s)

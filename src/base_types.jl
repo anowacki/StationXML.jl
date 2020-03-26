@@ -17,6 +17,7 @@ end
 
 """Extension of FloatType for distances, elevations, and depths."""
 @with_kw struct Distance
+    value::Float64
     unit::M{String} = "METERS"
     uncertainty::M{Uncertainty} = missing
 end

@@ -1,4 +1,5 @@
 using StationXML, Test
+using Dates: DateTime
 
 @testset "Parsing" begin
     @testset "Dates" begin
@@ -11,7 +12,7 @@ using StationXML, Test
                   <Sender>Test</Sender>
                   <Created>2019-04-01T09:58:21.123456789+01:00</Created>
                 </FDSNStationXML>
-                """).created == Dates.DateTime(2019, 04, 1, 10, 58, 21, 123)
+                """).created == DateTime(2019, 04, 1, 10, 58, 21, 123)
             # Time zone ahead of UTC
             @test StationXML.readstring("""
                 <?xml version="1.0" encoding="UTF-8"?>
@@ -20,7 +21,7 @@ using StationXML, Test
                   <Sender>Test</Sender>
                   <Created>2000-01-01T12:34:00.123456789-12:34</Created>
                 </FDSNStationXML>
-                """).created == Dates.DateTime(2000, 1, 1, 0, 0, 0, 123)
+                """).created == DateTime(2000, 1, 1, 0, 0, 0, 123)
             # UTC specified
             @test StationXML.readstring("""
                 <?xml version="1.0" encoding="UTF-8"?>
@@ -29,7 +30,7 @@ using StationXML, Test
                   <Sender>Test</Sender>
                   <Created>2019-04-01T09:58:21Z</Created>
                 </FDSNStationXML>
-                """).created == Dates.DateTime(2019, 04, 1, 9, 58, 21)
+                """).created == DateTime(2019, 04, 1, 9, 58, 21)
 
         end
     end

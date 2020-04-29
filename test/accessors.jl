@@ -1,9 +1,8 @@
 using StationXML, Test
 
-# Example StationXML file
-datafile = joinpath("..", "data", "JSA.xml")
+include("test_util.jl")
 
-let sxml = StationXML.read(datafile)
+let sxml = gzipped_read("JSA.xml.gz")
     @testset "Accessors" begin
         @testset "Functions" begin
             @test networks(sxml) == sxml.network

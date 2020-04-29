@@ -1,37 +1,38 @@
 # Reading and parsing functions
 
-"Flag for verbose debugging output in some functions."
-const VERBOSE = Ref(false)
-
 """
-    set_verbose!(true_or_false)
-
-Set whether (`true`) or not (`false`) to print debugging information for the
-`StationXML` module.
-"""
-set_verbose!(true_or_false) = VERBOSE[] = true_or_false
-
-"""
-    read(filename) -> ::FDSNStationXML
+    read(filename; warn=false) -> ::FDSNStationXML
 
 Read a FDSN StationXML file with name `filename` from disk and return a
 `FDSNStationXML` object.
+
+If `warn` is `true`, then print warnings when attributes and elements are
+encountered in the StationXML which are not expected.
+
+Note that StationXML.jl reads `filename` first before then parsing the
+string read in.  Do not `read` StationXML files which are larger than your
+system's memory.
 """
-read(filename) = readstring(String(Base.read(filename)), filename=filename)
+read(filename; warn=false) = readstring(String(Base.read(filename)), filename=filename, warn=warn)
 
 """
-    readstring(xml_string) -> ::FDSNStationXML
+    readstring(xml_string; filename=nothing, warn=false) -> ::FDSNStationXML
 
 Read the FDSN StationXML contained in `xml_string` and return a `FDSNStationXML` object.
+
+Optionally specify the `filename` from which the string was read.
+
+If `warn` is `true`, then print warnings when attributes and elements are
+encountered in the StationXML which are not expected.
 """
-function readstring(xml_string; filename=nothing)
+function readstring(xml_string; filename=nothing, warn=false)
     xml = EzXML.parsexml(xml_string)
     file_string = filename === nothing ? "" : " in file $filename"
     xml_is_station_xml(xml) ||
-        throw(ArgumentError("XML$file_string does not appear to be a StationXML file"))
+        throw(ArgumentError("\"$file_string\" does not appear to be a StationXML file"))
     schema_version_is_okay(xml) ||
         throw(ArgumentError("StationXML$file_string does not have the correct schema version"))
-    parse_node(xml.root)
+    parse_node(xml.root, warn)
 end
 
 """
@@ -52,9 +53,9 @@ provided in the new version.
 """
 function schema_version_is_okay(xml::EzXML.Document)
     version = VersionNumber(xml.root["schemaVersion"])
-    if version == v"1.0"
+    if version == v"1.0.0"
         return true
-    elseif version == v"1.1"
+    elseif v"1.1.0" <= version < v"2"
         @warn("document is StationXML version $version; only v1.0 data will be read")
         return true
     else
@@ -62,22 +63,28 @@ function schema_version_is_okay(xml::EzXML.Document)
     end
 end
 
-attributes_and_elements(node::EzXML.Node) = vcat(EzXML.attributes(node), EzXML.elements(node))
-
 """
-    parse_node(root::EzXML.Node) -> ::FDSNStationXML
+    parse_node(root::EzXML.Node, warn=false) -> ::FDSNStationXML
 
 Parse the `root` node of a StationXML document.  This can be accessed as
 `EzXML.readxml(file).root`.
+
+If `warn` is `true`, then warn about unexpected items in the StationXML.
 """
-parse_node(root::EzXML.Node) = parse_node(FDSNStationXML, root)
+parse_node(root::EzXML.Node, warn::Bool=false) = parse_node(FDSNStationXML, root, warn)
 
 "Types which can be directly parsed from a Node"
-const ParsableTypes = Union{Type{String},Type{Float64},Type{Int}}
-parse_node(T::ParsableTypes, node::EzXML.Node) = local_parse(T, node.content)
+const ParsableTypes = Union{String, Float64, Int}
+
+function parse_node(::Type{T}, node::EzXML.Node, warn::Bool=false) where {T<:ParsableTypes}
+    @debug("Parsing $T from \"$(node.content)\"")
+    local_parse(T, node.content)
+end
+
 # Handle dates with greater than millisecond precision by truncating to nearest millisecond,
 # cope with UTC time zone information (ends with 'Z'), and convert non-UTC time zones to UTC
-function parse_node(T::Type{DateTime}, node::EzXML.Node)
+function parse_node(T::Type{DateTime}, node::EzXML.Node, warn::Bool=false)
+    @debug("Parsing a DateTime from \"$(node.content)\"")
     # Remove sub-millisecond intervals
     m = match(r"(.*T..:..:..[\.]?)([0-9]{0,3})[0-9]*([-+Z].*)*", node.content)
     dt = DateTime(m.captures[1] * m.captures[2]) # Local date to ms
@@ -88,77 +95,68 @@ function parse_node(T::Type{DateTime}, node::EzXML.Node)
     dt
 end
 
-"Enumeration types, which here have only a field `value::String`"
-const StringEnumTypes = Union{Type{RestrictedStatus},Type{Nominal}}
-parse_node(T::StringEnumTypes, node::EzXML.Node) = T(node.content)
+"""
+    parse_node(::Type{Union{Missing,T}}, node::EzXML.Node, warn=false) where T -> ::T
 
-"Types with a value field and attributes"
-const ValueFieldType = Union{Type{Distance},Type{NumeratorCoefficient},Type{Coefficient}}
-parse_node(T::ValueFieldType, node::EzXML.Node) = parse_node(T, node, value=node.content)
+Parse an XML node into a union of a type `T` with `Missing`, for optional
+fields.
+"""
+function parse_node(::Type{Union{Missing,T}}, node::EzXML.Node, warn::Bool=false) where T
+    @debug("Parsing a Union{Missing,$T} from \"$(node.content)\"")
+    parse_node(T, node, warn)
+end
 
 """
-    parse_node(T, node::EzXML.Node; value=nothing) -> ::T
+    parse_node(::Type{T}, node::EzXML.Node, warn::Bool=false) where T -> ::T
 
-Create a type `T` from the StationXML module from an XML `node`.
-
-If `value` is not `nothing`, then this node represents one of $ValueFieldType.
+Parse the contents of `node` and return a type `T` containing the
+information 
 """
-function parse_node(T, node::EzXML.Node; value=nothing)
-    VERBOSE[] && println("\n===\nParsing node type $T\n===")
-    # Value field types have extra attributes
-    is_value_field = Type{T} <: ValueFieldType
-    VERBOSE[] && println("$T is a value field: $is_value_field")
-    # Arguments to the keyword constructor of the type T
+function parse_node(T, node::EzXML.Node, warn::Bool=false)
+    @debug("Parsing $T from fallback method")
+    attributes = attribute_fields(T)
+    @debug("  $T has attributes $attributes")
     args = Dict{Symbol,Any}()
-    all_elements = attributes_and_elements(node)
-    all_names = [transform_name(e.name) for e in all_elements]
-    VERBOSE[] && println("Element names: $all_names")
-    VERBOSE[] && println("Field names: $(fieldnames(T))")
-    # Fill in the field
-    for field in fieldnames(T)
-        field_type = fieldtype(T, field)
-        VERBOSE[] && @show field, T, field_type
-        # Skip fields not in our types
-        field in all_names ||
-            # Types with a `value` field with the same name as the upper field would
-            # fail the test without `field == :value`
-            (is_value_field && field == :value) ||
-            continue
-        if !(is_value_field && field == :value)
-            elm = all_elements[findfirst(isequal(field), all_names)]
-        end
-        # Unions are Missing-supporting fields; should only every have two types
-        if field_type isa Union
-            VERBOSE[] && println("Field $field is a Union type")
-            union_types = Base.uniontypes(field_type)
-            @assert length(union_types) == 2 && Missing in union_types
-            field_type = union_types[1] == Missing ? union_types[2] : union_types[1]
-            VERBOSE[] && println("Field type is $field_type")
-            args[field] = parse_node(field_type, elm)
-            VERBOSE[] && println("\n   Saving $field as $(args[field])")
-        # Multiple elements allowed
-        elseif field_type <: AbstractVector
-            el_type = eltype(field_type)
-            VERBOSE[] && println("Element type is $el_type")
-            ifields = findall(isequal(field), all_names)
-            values = el_type[]
-            for i in ifields
-                push!(values, parse_node(el_type, all_elements[i]))
-            end
-            args[field] = values
-            VERBOSE[] && println("\n   Saving $field as $values")
-        # The value field of a ValueFieldType
-        elseif field == :value && is_value_field
-            @assert value !== nothing
-            VERBOSE[] && println("Value of field is $(repr(value))")
-            args[field] = local_parse(field_type, value)
-            VERBOSE[] && println("\n   Saving $field as $(repr(args[field]))")
-        # Just one (maybe optional) field
+    # Attributes
+    for att in EzXML.eachattribute(node)
+        field = transform_name(att.name)
+        @debug("  Parsing attribute $field")
+        if field in attributes
+            fieldT = fieldtype(T, field)
+            @debug("    Parsing $field as a $fieldT")
+            args[field] = local_parse(fieldT, att.content)
         else
-            args[field] = parse_node(field_type, elm)
-            VERBOSE[] && println("\n   Saving $field as $(repr(args[field]))")
+            warn && @warn("unexpected attribute \"$(att.name)\" (:$field) for $T")
         end
     end
+    # Elements
+    elements = element_fields(T)
+    @debug("  $T has elements $(collect(elements))")
+    for elm in EzXML.eachelement(node)
+        field = transform_name(elm.name)
+        @debug("  Parsing element $field")
+        if field in elements
+            fieldT = fieldtype(T, field)
+            @debug("    Parsing $field as a $fieldT")
+            if fieldT <: AbstractVector
+                # Create an empty vector of fieldTs the first time we hit this
+                if !haskey(args, field)
+                    args[field] = fieldT()
+                    @debug("    Creating new array type $fieldT")
+                end
+                @debug("    Parsing vector element $(fieldT)")
+                push!(args[field], parse_node(eltype(fieldT), elm, warn))
+                @debug("    Vector of $(eltype(fieldT)) length: $(length(args[field]))")
+            else
+                args[field] = parse_node(fieldT, elm, warn)
+                @debug("$fieldT $elm $warn")
+                @debug("    Got value of $(args[field]) for $field")
+            end
+        else
+            warn && @warn("unexpected element \"$(elm.name)\" for $T")
+        end
+    end
+    @debug("Args for $T: $args")
     T(; args...)
 end
 
@@ -168,3 +166,4 @@ local_tryparse(T::Type{<:AbstractString}, s::AbstractString) = s
 local_tryparse(T::DataType, s::AbstractString) = tryparse(T, s)
 local_parse(T::Type{<:AbstractString}, s::AbstractString) = s
 local_parse(T::DataType, s::AbstractString) = parse(T, s)
+local_parse(::Type{Union{Missing, T}}, s::AbstractString) where T = local_parse(T, s)

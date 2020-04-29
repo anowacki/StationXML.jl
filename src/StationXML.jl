@@ -209,11 +209,13 @@ using Dates
 using Mixers: @pour
 using Parameters
 import EzXML
+import DocStringExtensions
 
 export FDSNStationXML, channels, channel_codes, networks, stations
 
 const M{T} = Union{T,Missing}
 
+include("compat.jl")
 include("util.jl")
 include("base_types.jl")
 include("derived_types.jl")

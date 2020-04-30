@@ -182,6 +182,13 @@ function xs_nmtoken_or_throw(s)
 end
 
 """
+    abstract type EnumeratedStruct end
+
+Supertype of all structs made with the [`@enumerated_struct`](@ref) macro.
+"""
+abstract type EnumeratedStruct end
+
+"""
     @enumerated_struct(name, values)
 
 Create a `struct` called `name` with a single `String` field, `:value`, which
@@ -232,8 +239,8 @@ macro enumerated_struct(name, values)
     name = esc(name)
     quote
         """
-            $($name)(value)
-            $($name)(; value)
+            $($name)(value) <: EnumeratedStruct
+            $($name)(; value) <: EnumeratedStruct
 
         Enumerated struct containing a single string which must be one
         of the following: $($values_docstring).
@@ -263,7 +270,7 @@ macro enumerated_struct(name, values)
         "$($second_value)"
         ```
         """
-        struct $name
+        struct $name <: $(esc(EnumeratedStruct))
             value::String
             function $name(value)
                 if value ∉ $values
@@ -273,12 +280,13 @@ macro enumerated_struct(name, values)
             end
             $name(; value) = $name(value)
         end
-        $(@__MODULE__).attribute_fields(::Type{$name}) = ()
-        $(@__MODULE__).element_fields(::Type{$name}) = ()
-        Base.convert(::Type{S}, s::$name) where {S<:AbstractString} = S(s.value)
-        Base.convert(::Type{$name}, s::AbstractString) = $(name)(s)
-        $(@__MODULE__).parse_node(::Type{$name}, node::EzXML.Node, warn::Bool=false) = $(name)(node.content)
-        local_parse(::Type{$name}, s::AbstractString) = $(name)(s)
-        Base.parse(::Type{$name}, s::AbstractString) = $(name)(s)
     end
 end
+
+attribute_fields(::Type{<:EnumeratedStruct}) = ()
+element_fields(::Type{<:EnumeratedStruct}) = ()
+Base.convert(::Type{S}, s::T) where {S<:AbstractString, T<:EnumeratedStruct} = S(s.value)
+Base.convert(::Type{T}, s::AbstractString) where {T<:EnumeratedStruct} = T(s)
+parse_node(::Type{T}, node::EzXML.Node, warn::Bool=false) where {T<:EnumeratedStruct} = T(node.content)
+local_parse(::Type{T}, s::AbstractString) where {T<:EnumeratedStruct} = T(s)
+Base.parse(::Type{T}, s::AbstractString) where {T<:EnumeratedStruct} = T(s)

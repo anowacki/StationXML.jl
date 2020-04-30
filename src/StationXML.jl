@@ -207,11 +207,17 @@ module StationXML
 using Dates
 
 using Mixers: @pour
-using Parameters
+using Parameters: @with_kw
 import EzXML
 import DocStringExtensions
 
-export FDSNStationXML, channels, channel_codes, networks, stations
+export
+  FDSNStationXML,
+  channel_codes,
+  channels,
+  networks,
+  stations,
+  xmldoc
 
 const M{T} = Union{T,Missing}
 

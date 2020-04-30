@@ -542,9 +542,13 @@ $(DocStringExtensions.TYPEDFIELDS)
     begin_effective_time::M{DateTime} = missing
     end_effective_time::M{DateTime} = missing
     author::Vector{Person} = Person[]
+    id::M{Int} = missing
 end
 
-Comment(value) = Comment(value, missing, missing, Person[])
+Comment(value) = Comment(value, missing, missing, Person[], missing)
+
+element_fields(::Type{Comment}) = (:value, :begin_effective_time, :end_effective_time, :author)
+attribute_fields(::Type{Comment}) = (:id,)
 
 """
     SampleRateRatio(number_samples, number_seconds)

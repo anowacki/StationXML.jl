@@ -183,21 +183,21 @@ Another goal is to create a base schema that can be extended to represent simila
 
 #### Versioning for FDSN StationXML:
 
-The 'version' attribute of the schema definition identifies the version of the schema.  This
+The `version` attribute of the schema definition identifies the version of the schema.  This
 version is not enforced when validating documents.
 
-The required 'schemaVersion' attribute of the root element identifies the version of the schema
+The required `schemaVersion` attribute of the root element identifies the version of the schema
 that the document is compatible with.  Validation only requires that a value is present but
 not that it matches the schema used for validation.
 
-The targetNamespace of the document identifies the major version of the schema and document,
+The `targetNamespace` of the document identifies the major version of the schema and document,
 version 1.x of the schema uses a target namespace of "http://www.fdsn.org/xml/station/1".
 All minor versions of a will be backwards compatible with previous minor releases.  For
 example, all 1.x schemas are backwards compatible with and will validate documents for 1.0.
 Major changes to the schema that would break backwards compabibility will increment the major
 version number, e.g. 2.0, and the namespace, e.g. "http://www.fdsn.org/xml/station/2".
 
-This combination of attributes and targetNamespaces allows the schema and documents to be
+This combination of attributes and `targetNamespace`s allows the schema and documents to be
 versioned and allows the schema to be updated with backward compatible changes (e.g. 1.2)
 and still validate documents created for previous major versions of the schema (e.g. 1.0).
 

@@ -253,11 +253,17 @@ $(DocStringExtensions.TYPEDFIELDS)
     "Value of the coefficient (no unit)"
     value::Float64
     "Absolute error in the positive direction."
-    plus_error::M{Float64}
+    plus_error::M{Float64} = missing
     "Absolute error in the negative direction (i.e., this value should be positive)."
-    minus_error::M{Float64}
+    minus_error::M{Float64} = missing
     "Number of the coefficient"
-    number::Int
+    number::M{Int} = missing
+
+    function Coefficient(value, plus_error, minus_error, number)
+        number !== missing && number < 0 &&
+            throw(ArgumentError("number must be 0 or greater"))
+        new(value, plus_error, minus_error, number)
+    end
 end
 
 attribute_fields(::Type{Coefficient}) = (:plus_error, :minus_error, :number)

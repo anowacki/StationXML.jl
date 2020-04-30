@@ -52,6 +52,7 @@ using StationXML
             # Network
             @test_throws ArgumentError StationXML.Network(code="AN", total_number_stations=-1)
             @test_throws ArgumentError StationXML.Network(code="AN", selected_number_stations=-1)
+            @test_throws ArgumentError StationXML.Coefficient(value=1, number=-1)
         end
     end
 

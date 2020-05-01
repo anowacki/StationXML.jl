@@ -610,6 +610,8 @@ $(DocStringExtensions.TYPEDFIELDS)
     country::M{String} = missing
 end
 
+Site(name) = Site(; name=name)
+
 """
     Comment(value, begin_effective_time, end_effective_time, author)
     Comment(; value, begin_effective_time=missing, end_effective_time=missing, author=Person[])

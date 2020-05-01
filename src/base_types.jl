@@ -515,6 +515,7 @@ $(DocStringExtensions.TYPEDFIELDS)
     description::String
 end
 
+# NominalType defined in the specification but not used
 """
     Nominal
 

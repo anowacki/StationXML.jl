@@ -181,15 +181,17 @@ end
     FIR(; kwargs...)
 
 Response: FIR filter. Corresponds to SEED blockette 61. FIR filters
-are also commonly documented using the CoefficientsType element.
+are also commonly documented using the `Coefficients` type.
 
 # List of fields
 $(DocStringExtensions.TYPEDFIELDS)
 """
 @with_kw mutable struct FIR
     @BaseFilter
-    "Symmetry of filter.  Must be one of `\"NONE\"`, `\"EVEN\"` or `\"ODD\"`"
+    "Symmetry of filter.  Must be one of `\"NONE\"`, `\"EVEN\"` or `\"ODD\"`.
+     See [`StationXML.FIR`](@ref)."
     symmetry::FIRSymmetry
+    "Set of [`NumeratorCoefficient`](@ref StationXML.NumeratorCoefficient)s."
     numerator_coefficient::Vector{NumeratorCoefficient} = NumeratorCoefficient[]
 end
 
@@ -210,6 +212,7 @@ $(DocStringExtensions.TYPEDFIELDS)
 """
 @with_kw mutable struct Coefficients
     @BaseFilter
+    "Type of the transfer function (see [`CfTransferFunction`](@ref)."
     cf_transfer_function_type::CfTransferFunction
     numerator::Vector{Float} = Float[]
     denominator::Vector{Float} = Float[]
@@ -224,8 +227,11 @@ attribute_fields(::Type{Coefficients}) = BASE_FILTER_ATTRIBUTES
 $(DocStringExtensions.TYPEDFIELDS)
 """
 @with_kw struct ResponseListElement
+    "Frequency at which the `amplitude` and `phase` was measured."
     frequency::Frequency
+    "Amplitude response at the given `frequency`."
     amplitude::Float
+    "Phase angle response at the given `frequency`"
     phase::Angle
 end
 
@@ -239,6 +245,7 @@ $(DocStringExtensions.TYPEDFIELDS)
 """
 @with_kw struct ResponseList
     @BaseFilter
+    "Set of [`ResponseListElement`](@ref)s."
     response_list_element::Vector{ResponseListElement} = ResponseListElement[]
 end
 
@@ -305,7 +312,9 @@ $(DocStringExtensions.TYPEDFIELDS)
     approximation_type::Approximation = Approximation("MACLAURIN")
     frequency_lower_bound::Frequency
     frequency_upper_bound::Frequency
+    "The low frequency corner for which the sensor is valid."
     approximation_lower_bound::Float64
+    "The high frequency corner for which the sensor is valid."
     approximation_upper_bound::Float64
     maximum_error::Float64
     coefficient::Vector{Coefficient} = Coefficient[]
@@ -314,23 +323,35 @@ end
 """
     Decimation
 
+Description of the decimation stage of a response.
+
 Corresponds to SEED blockette 57.
 
 # List of fields
 $(DocStringExtensions.TYPEDFIELDS)
 """
 @with_kw struct Decimation
+    "Sample rate of the signal before decimation."
     input_sample_rate::Frequency
+    "Number of times the signal is decimated.  The output sample rate
+     is therefore `input_sample_rate ÷ factor`."
     factor::Int
+    "Which sample is chosen for use when decimating, starting at 0 for
+     the first sample in the window of `factor` samples.
+     (This implies `0 <= offset < factor`.)"
     offset::Int
+    "The estimated pure delay of the signal, where positive values
+     mean a time delay or shift to later in time."
     delay::Float64
+    "Time shift applied to correct for the delay introduced in this
+     stage.  Positive numbers mean a time advance or shift to earlier in time."
     correction::Float64
 end
 
 """
     ResponseStage
 
-This complex type represents channel response and covers SEED blockettes 53 to 56.
+Represents a channel's response and covers SEED blockettes 53 to 56.
 
 !!! note
     Although the `stage_gain` field is mandatory in the StationXML specification,
@@ -376,7 +397,7 @@ attribute_fields(::Type{ResponseStage}) = (:number, :resource_id)
 
 Instrument sensitivities, or the complete system sensitivity,
 can be expressed using either a sensitivity value or a polynomial. The
-information can be used to convert raw data to Earth at a specified
+information can be used to convert raw data to real units at a specified
 frequency or within a range of frequencies.
 
 # List of fields

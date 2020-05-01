@@ -87,6 +87,7 @@ function parse_node(T::Type{DateTime}, node::EzXML.Node, warn::Bool=false)
     @debug("Parsing a DateTime from \"$(node.content)\"")
     # Remove sub-millisecond intervals
     m = match(r"(.*T..:..:..[\.]?)([0-9]{0,3})[0-9]*([-+Z].*)*", node.content)
+    m === nothing && throw(ArgumentError("invalid date-time string \"$(node.content)\""))
     dt = DateTime(m.captures[1] * m.captures[2]) # Local date to ms
     (m.captures[3] === nothing || m.captures[3] in ("", "Z", "+00:00", "-00:00")) && return dt # UTC
     pm = m.captures[3][1] # Whether ahead or behind UTC

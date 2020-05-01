@@ -1,5 +1,6 @@
 using StationXML, Test
 using Dates: DateTime
+import EzXML
 
 @testset "Parsing" begin
     @testset "Dates" begin
@@ -31,7 +32,12 @@ using Dates: DateTime
                   <Created>2019-04-01T09:58:21Z</Created>
                 </FDSNStationXML>
                 """).created == DateTime(2019, 04, 1, 9, 58, 21)
-
+            # Invalid format throws a helpful error
+            for dtstring in ("2000", "2000-01", "2000-01-01", "2000-01-01T",
+                    "2000-01-01T00", "2000-01-01T00:00")
+                node = EzXML.parsexml("<element>$dtstring</element>").root
+                @test_throws ArgumentError StationXML.parse_node(DateTime, node)
+            end
         end
     end
 end

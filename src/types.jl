@@ -19,6 +19,10 @@ often colocated with other channels at the same location of a station.
 
 Equivalent to SEED blockette 52 and parent element for the related the response blockettes.
 
+!!! note
+    The presence of a `sample_rate_ratio` without a `sample_rate` field is
+    not allowed in the standard, but it permitted by StationXML.jl.
+
 # List of fields
 $(DocStringExtensions.TYPEDFIELDS)
 """
@@ -63,7 +67,7 @@ $(DocStringExtensions.TYPEDFIELDS)
     # SampleRateGroup fields
     "Sampling rate of the channel in samples/s.  If `sample_rate_ratio` is
      also included, then `sample_rate` is more definitive."
-    sample_rate::SampleRate
+    sample_rate::M{SampleRate} = missing
     "Sampling rate of the channel in number of samples per number of seconds."
     sample_rate_ratio::M{SampleRateRatio} = missing
     # end of SampleRateGroup fields

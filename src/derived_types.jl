@@ -211,8 +211,8 @@ $(DocStringExtensions.TYPEDFIELDS)
 @with_kw mutable struct Coefficients
     @BaseFilter
     cf_transfer_function_type::CfTransferFunction
-    numerator::Vector{Float64} = Float64[]
-    denominator::Vector{Float64} = Float64[]
+    numerator::Vector{Float} = Float[]
+    denominator::Vector{Float} = Float[]
 end
 
 attribute_fields(::Type{Coefficients}) = BASE_FILTER_ATTRIBUTES

@@ -36,7 +36,7 @@ For instance (using an example StationXML file supplied with this module):
 ```julia
 julia> using StationXML
 
-julia> sxml = StationXML.read(joinpath(dirname(pathof(StationXML)), "..", "data", "JSA.xml"))
+julia> sxml = StationXML.read(joinpath(dirname(pathof(StationXML)), "..", "test", data", "JSA.xml"))
 StationXML.FDSNStationXML
   source: String "IRIS-DMC"
   sender: String "IRIS-DMC"
@@ -48,11 +48,46 @@ StationXML.FDSNStationXML
 
 ```
 
+## Writing data
+
+Simply call `write` on an `FDSNStationXML` object to write it to disk or other
+`IO` stream:
+
+```julia
+julia> write("output_file.xml", sxml)
+```
+
 ## Accessing fields
 
 You should access the fields of `FDSNStationXML` objects directly.  These match the
-StationXML specification directly, and can also be listed for each of the types with
-the usual `fieldnames(::DataType)` function.  (E.g., `fieldnames(Channel)`.)
+StationXML specification directly, and are listed in each type's docstrings.
+These are accessible via the REPL by typing `?` and then the name of the
+type.  For example:
+
+```julia
+julia> ? # REPL prompt becomes help?>
+help> StationXML.Channel
+  Channel
+
+  A channel is a time series recording of a component of some observable, often
+  colocated with other channels at the same location of a station.
+
+  Equivalent to SEED blockette 52 and parent element for the related the response
+  blockettes.
+
+  │ Note
+  │
+  │  The presence of a sample_rate_ratio without a sample_rate field is not
+  │  allowed in the standard, but it permitted by StationXML.jl.
+
+  List of fields
+  ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
+
+    •    description::Union{Missing, String}
+      
+        Default: missing
+...
+```
 
 To find out how many stations are in each of the networks returned in your request
 XML, and what the network code is, you can do:
@@ -185,3 +220,4 @@ julia> channels(sxml).longitude
 Therefore, it aims to contain almost all the information which can
 be contained in a StationXML file.  Elements and attributes of the XML
 are fields within structures nested several layers deep.
+

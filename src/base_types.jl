@@ -547,6 +547,9 @@ $(DocStringExtensions.TYPEDFIELDS)
     end
 end
 
+Base.convert(::Type{Email}, s::AbstractString) = Email(s)
+Base.convert(S::Type{<:AbstractString}, email::Email) = S(email.value)
+
 """
     PhoneNumber(country_code, area_code, phone_number, description)
     PhoneNumber(; country_code=missing, area_code, phone_number, description=missing)
@@ -625,6 +628,8 @@ $(DocStringExtensions.TYPEDFIELDS)
 end
 
 Comment(value) = Comment(value, missing, missing, Person[], missing)
+
+Base.convert(::Type{Comment}, s::AbstractString) = Comment(s)
 
 element_fields(::Type{Comment}) = (:value, :begin_effective_time, :end_effective_time, :author)
 attribute_fields(::Type{Comment}) = (:id,)

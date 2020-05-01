@@ -19,4 +19,18 @@ using InteractiveUtils: subtypes
             @test convert(String, T(val)) == val
         end
     end
+
+    @testset "Email" begin
+        let address = "test.name@example.com"
+            @test convert(String, StationXML.Email(address)) == address
+            @test convert(StationXML.Email, address).value == address
+            @test_throws ArgumentError convert(StationXML.Email, "not an email address")
+        end
+    end
+
+    @testset "Comment" begin
+        let comment = "Some text comment"
+            @test convert(StationXML.Comment, comment).value == comment
+        end
+    end
 end

@@ -1,5 +1,9 @@
 # Reading and parsing functions
 
+#
+# Reading
+#
+
 """
     read(filename; warn=false) -> ::FDSNStationXML
 
@@ -113,7 +117,7 @@ end
 Parse the contents of `node` and return a type `T` containing the
 information 
 """
-function parse_node(T, node::EzXML.Node, warn::Bool=false)
+function parse_node(::Type{T}, node::EzXML.Node, warn::Bool=false) where T
     @debug("Parsing $T from fallback method")
     attributes = attribute_fields(T)
     @debug("  $T has attributes $attributes")
@@ -163,8 +167,155 @@ end
 
 # Version of parse which accepts String as the type.
 # Don't define this for Base as this is type piracy.
-local_tryparse(T::Type{<:AbstractString}, s::AbstractString) = s
-local_tryparse(T::DataType, s::AbstractString) = tryparse(T, s)
-local_parse(T::Type{<:AbstractString}, s::AbstractString) = s
-local_parse(T::DataType, s::AbstractString) = parse(T, s)
+local_tryparse(::Type{T}, s::AbstractString) where T<:AbstractString = s
+local_tryparse(::Type{T}, s::AbstractString) where T = tryparse(T, s)
+local_parse(::Type{<:AbstractString}, s::AbstractString) = s
+local_parse(::Type{T}, s::AbstractString) where T = parse(T, s)
 local_parse(::Type{Union{Missing, T}}, s::AbstractString) where T = local_parse(T, s)
+
+
+#
+# Writing
+#
+
+"""
+    write(io, sxml::FDSNStationXML)
+
+Write a `FDSNStationXML` structure to `io`, which may be a filename
+or a `Base.IO` type.
+
+# Example
+(Note that `"example_stationxml_file.xml"` may not exist.)
+```
+julia> sxml = StationXML.read("example_stationxml_file.xml");
+
+julia> write("new_file.xml", sxml)
+```
+"""
+Base.write(io::IO, sxml::FDSNStationXML) = EzXML.prettyprint(io, xmldoc(sxml))
+
+
+"""
+    xmldoc(sxml::FDSNStationXML) -> xml::EzXML.XMLDocument
+
+Create an XML document from `sxml`, a set of events of type `EventParameters`.
+`xml` is an `EzXML.XMLDocument` suitable for output.
+
+The StationXML document `xml` may be written with `write(io, xml)`
+or converted to a string with `string(xml)`.
+"""
+function xmldoc(sxml::FDSNStationXML)
+    version = "1"
+    doc = EzXML.XMLDocument("1.0")
+    root = EzXML.ElementNode("FDSNStationXML")
+    # FIXME: Is this the only way to set a namespace in EzXML?
+    namespace = EzXML.AttributeNode("xmlns", "http://www.fdsn.org/xml/station/" * version)
+    EzXML.link!(root, namespace)
+    EzXML.setroot!(doc, root)
+    add_attributes!(root, sxml)
+    add_elements!(root, :fdsn_station_xml, sxml)
+    doc
+end
+
+"""
+    add_attributes!(node, value) -> node
+
+Add the attribute fields from the structure `value` to a `node`.
+For QuakeML documents, all attributes should be `ResourceReference`s.
+"""
+function add_attributes!(node, value::T) where T
+    for field in attribute_fields(T)
+        content = getfield(value, field)
+        content === missing && continue
+        add_attribute!(node, field, content)
+    end
+    node
+end
+
+function add_attribute!(node, field, value)
+    value === missing && return node
+    name = xml_attribute_name(field)
+    attr = EzXML.AttributeNode(name, string(value))
+    EzXML.link!(node, attr)
+    node
+end
+
+add_attribute!(node, field, value::EnumeratedStruct) = add_attribute!(node, field, value.value)
+
+"""
+    add_elements!(node, parent_field, value) -> node
+
+Add the elements to `node` contained within `value`.  `parent_field`
+is the name of the field which contains `value`.
+"""
+function add_elements!(node, parent_field, value::T) where T
+    for field in element_fields(T)
+        @debug("adding $parent_field: $field")
+        content = getfield(value, field)
+        if content === missing
+            continue
+        end
+        add_element!(node, field, content)
+    end
+    node
+end
+
+function add_elements!(node, parent_field, values::AbstractArray)
+    for value in values
+        add_elements!(node, parent_field, value)
+    end
+    node
+end
+
+"Union of types which can be natively written"
+const WritableTypes = Union{Float64, Int, String, DateTime, Bool}
+
+"""
+    add_element!(node, field, value) -> node
+
+Add an element called `field` to `node` with content `value`.
+"""
+function add_element!(node, field, value::WritableTypes)
+    @debug("  adding writable type name \"$field\" with value \"$value\"")
+    name = xml_element_name(field)
+    elem = EzXML.ElementNode(name)
+    add_text!(elem, value)
+    EzXML.link!(node, elem)
+    node
+end
+
+function add_element!(node, field, value::EnumeratedStruct)
+    @debug("  adding enumerated struct name \"$field\" with value \"$value\"")
+    add_element!(node, field, value.value)
+end
+
+function add_element!(node, field, values::AbstractArray)
+    @debug("  adding array type name \"$field\" with $(length(values)) values")
+    for value in values
+        add_element!(node, field, value)
+    end
+    node
+end
+
+# Fallback for structs
+function add_element!(node, field, value::T) where T
+    @debug("  adding compound type name \"$field\" of type \"$(typeof(value))\"")
+    name = xml_element_name(field)
+    elem = EzXML.ElementNode(name)
+    EzXML.link!(node, elem)
+    add_attributes!(elem, value)
+    add_elements!(elem, field, value)
+    if has_text_field(T)
+        value_field = text_field(T)
+        add_text!(elem, getfield(value, value_field))
+    end
+    node
+end
+
+"Add simple text to an element node"
+function add_text!(node, value::WritableTypes)
+    @debug("  adding simple text with value \"$value\"")
+    content = EzXML.TextNode(string(value))
+    EzXML.link!(node, content)
+    node
+end

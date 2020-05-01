@@ -223,4 +223,46 @@ include("test_util.jl")
             </FDSNStationXML>
             """))
     end
+
+    @testset "Writing strings" begin
+        let sxml = FDSNStationXML(source="StationXML.jl",
+                created=DateTime(3000), schema_version="1"), xml=xmldoc(sxml)
+            push!(sxml.network, StationXML.Network(code="AN"))
+            @test string(xml) == """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" schemaVersion="1"><Source>StationXML.jl</Source><Created>3000-01-01T00:00:00</Created></FDSNStationXML>
+                """
+        end
+    end
+
+    @testset "Writing" begin
+        filenames = ("irisws_AK.xml.gz", "irisws_IU_BHx.xml.gz", "JSA.xml.gz",
+            "orfeus_NL_HGN.xml.gz")
+        @testset "To file" begin
+            let sxml = sxml = FDSNStationXML(source="AN",
+                    created=DateTime("2000-01-01"), schema_version="1.0")
+                push!(sxml.network, StationXML.Network(code="AN"))
+                push!(sxml.network[1].comment, StationXML.Comment("A comment"))
+                io = IOBuffer()
+                write(io, sxml)
+                seekstart(io)
+                sxml′ = StationXML.read(io)
+                @test sxml == sxml′
+                mktemp() do tempfile, f
+                    write(f, sxml)
+                    seekstart(f)
+                    sxml″ = StationXML.read(f)
+                    @test sxml == sxml″
+                end
+            end
+        end
+        @testset "Round trip file $file" for file in filenames
+            sxml = gzipped_read(file)
+            io = IOBuffer()
+            write(io, sxml)
+            seekstart(io)
+            sxml′ = StationXML.read(io)
+            @test sxml == sxml′
+        end
+    end
 end

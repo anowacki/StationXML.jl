@@ -13,10 +13,15 @@ Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 
 [compat]
 julia = "1.0"
+DocStringExtensions = "0.8"
+EzXML = "1"
+Mixers = "0.1"
+Parameters = "0.12"
 
 [extras]
 CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
+InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["CodecZlib", "Test"]
+test = ["CodecZlib", "InteractiveUtils", "Test"]

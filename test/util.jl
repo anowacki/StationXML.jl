@@ -66,6 +66,9 @@ using EzXML: ElementNode
 
     @testset "Enumeration macro" begin
         @eval StationXML.@enumerated_struct(ExampleStruct, ("A", "B", "D"))
+        # FIXME: Work out correct escaping so permitted_values is evaluated
+        #        in the correct scope (i.e., always StationXML)
+        @test Main.permitted_values(ExampleStruct) == ("A", "B", "D")
         @test_throws LoadError @eval StationXML.@enumerated_struct(ExampleStruct2, ())
         @test_throws LoadError @eval StationXML.@enumerated_struct(ExampleStruct3, 1.0)
         @test isdefined(Main, :ExampleStruct)
@@ -80,5 +83,9 @@ using EzXML: ElementNode
         node = ElementNode("nodeName")
         node.content = "B"
         @test StationXML.parse_node(ExampleStruct, node, true) == ExampleStruct("B")
+        @test StationXML.attribute_fields(ExampleStruct) == ()
+        @test StationXML.element_fields(ExampleStruct) == ()
+        @test StationXML.has_text_field(ExampleStruct) == true
+        @test StationXML.text_field(ExampleStruct) == :value
     end
 end

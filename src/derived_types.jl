@@ -153,9 +153,10 @@ attribute_fields(::Type{PolesZeros}) = BASE_FILTER_ATTRIBUTES
 # List of fields
 $(DocStringExtensions.TYPEDFIELDS)
 """
-@with_kw struct NumeratorCoefficient
+@with_kw struct NumeratorCoefficient <: NumberType
     value::Float64
     i::M{Int} = missing
+    NumeratorCoefficient(value, i=missing) = new(value, i)
 end
 
 attribute_fields(::Type{NumeratorCoefficient}) = (:i,)
@@ -249,7 +250,7 @@ attribute_fields(::Type{ResponseList}) = BASE_FILTER_ATTRIBUTES
 # List of fields
 $(DocStringExtensions.TYPEDFIELDS)
 """
-@with_kw struct Coefficient
+@with_kw struct Coefficient <: NumberType
     "Value of the coefficient (no unit)"
     value::Float64
     "Absolute error in the positive direction."
@@ -259,7 +260,7 @@ $(DocStringExtensions.TYPEDFIELDS)
     "Number of the coefficient"
     number::M{Int} = missing
 
-    function Coefficient(value, plus_error, minus_error, number)
+    function Coefficient(value, plus_error=missing, minus_error=missing, number=missing)
         number !== missing && number < 0 &&
             throw(ArgumentError("number must be 0 or greater"))
         new(value, plus_error, minus_error, number)
@@ -267,7 +268,6 @@ $(DocStringExtensions.TYPEDFIELDS)
 end
 
 attribute_fields(::Type{Coefficient}) = (:plus_error, :minus_error, :number)
-element_fields(::Type{Coefficient}) = ()
 
 function parse_node(::Type{Coefficient}, node::EzXML.Node, warn::Bool=false)
     value = parse(Float64, node.content)

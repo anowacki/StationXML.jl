@@ -194,11 +194,22 @@ abstract type EnumeratedStruct end
 Create a `struct` called `name` with a single `String` field, `:value`, which
 must match one of the items in `values`.
 
-Also create a keyword constructor with one required keyword argument,
-`value`, a conversion between the struct and an `AbstractString`,
-and a `parse_node` method to convert a node into a `name`.
+Create a keyword constructor with one required keyword argument,
+`value`, and add a method for `permitted_values` returning the values
+which can be used in `name`.
 
-Define conversions between `String` and the struct.
+The struct is a subtype of [`StationXML.EnumeratedStruct`](@ref),
+and hence has methods defined for the following functions:
+
+- [`StationXML.attribute_fields`](@ref)
+- [`StationXML.element_fields`](@ref)
+- [`StationXML.has_text_field`](@ref)
+- [`StationXML.text_field`](@ref)
+- [`StationXML.parse_node`](@ref)
+- [`StationXML.local_parse`](@ref)
+
+See [`StationXML.EnumeratedStruct`](@ref) for more details on other
+methods defined for the new type.
 
 # Example
 
@@ -209,7 +220,7 @@ The following code
 
 is equivalent to
 ```
-struct Example
+struct Example <: StationXML.EnumeratedStruct
     value::String
     function Example(value)
         if value ∉ ("A", "B", "D")
@@ -220,9 +231,10 @@ struct Example
     Example(; value) = Example(value)
 end
 
-Base.convert(::Type{T}, e::Example) where {T<:AbstractString} = T(e.value)
-Base.convert(::Type{Example}, s::AbstractString) = Example(s)
-
+# WARNING!
+# This method is added to the module from which the macro is called,
+# not StationXML!
+permitted_values(::Type{Example}) = (\"A\", \"B\", \"D\")
 ```
 """
 macro enumerated_struct(name, values)
@@ -236,11 +248,16 @@ macro enumerated_struct(name, values)
     n_values == 0 && throw(ArgumentError("number of permitted values cannot be 0"))
     first_value = string(first(values.args))
     second_value = n_values == 1 ? first_value : string(values.args[2])
+    module_name = :($(@__MODULE__).$name)
     name = esc(name)
     quote
         """
-            $($name)(value) <: EnumeratedStruct
-            $($name)(; value) <: EnumeratedStruct
+            $($name) <: EnumeratedStruct
+
+        # Constructors
+
+            $($name)(value)
+            $($name)(; value)
 
         Enumerated struct containing a single string which must be one
         of the following: $($values_docstring).
@@ -280,11 +297,21 @@ macro enumerated_struct(name, values)
             end
             $name(; value) = $name(value)
         end
+
+        # FIXME: Work out correct escaping so permitted_values is always
+        #        added to the StationXML module and not the module in which
+        #        the macro is called.
+        #        In other words, this currently adds a method to the
+        #        module where we call @enumerated_struct, though this
+        #        is fine if it's only used in this module.
+        $(esc(:(permitted_values)))(::$(esc(Type)){$name}) = $values
     end
 end
 
 attribute_fields(::Type{<:EnumeratedStruct}) = ()
 element_fields(::Type{<:EnumeratedStruct}) = ()
+has_text_field(::Type{<:EnumeratedStruct}) = true
+text_field(::Type{<:EnumeratedStruct}) = :value
 Base.convert(::Type{S}, s::T) where {S<:AbstractString, T<:EnumeratedStruct} = S(s.value)
 Base.convert(::Type{T}, s::AbstractString) where {T<:EnumeratedStruct} = T(s)
 parse_node(::Type{T}, node::EzXML.Node, warn::Bool=false) where {T<:EnumeratedStruct} = T(node.content)

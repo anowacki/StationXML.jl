@@ -1,16 +1,89 @@
 # Base types which do not depend on others
 
-"By default, types do not have attributes"
-attribute_fields(::Type) = ()
-attribute_fields(::Type{Union{Missing,T}}) where T = attribute_fields(T)
-
-"By default, all fields are element fields, apart from the attribute fields"
-element_fields(::Type{T}) where T = (field for field in fieldnames(T) if field ∉ attribute_fields(T))
-element_fields(::Type{Union{Missing,T}}) where T = element_fields(T)
-
 # TODO: Find a reliable way to 'inherit' from versions of
 # uncertaintyDouble and floatType and so on without manually repeating
 # fields
+
+"""
+    NumberType
+
+An abstract type with subtypes which are related to the specification's
+`FloatType` and `FloatNoUnit` type.
+
+Importantly, they have a `value` field which is a text node containing
+the value, plus some attributes.
+
+`NumberType`s can be converted to `Number`s and converted from `Real`s.
+This means that
+
+# Example
+```
+julia> convert(Complex{Float64}, StationXML.Voltage(1.5))
+1.5 + 0.0im
+```
+
+See also: [`attribute_fields`](@ref), [`element_fields`](@ref),
+[`text_field`](@ref).
+"""
+abstract type NumberType end
+
+Base.convert(T::Type{<:NumberType}, value::Real) = T(value)
+Base.convert(T::Type{<:Number}, value::NumberType) = T(value.value)
+
+"""
+    attribute_fields(T::Type)
+
+Return the set of fields for type `T` which are attributes in the
+equivalent XML representation of `T`.
+
+The fallback method for this function assumes that `T` has no
+attributes associated with it, so a method should be added where that
+is not the case.
+"""
+attribute_fields(::Type) = ()
+attribute_fields(::Type{Union{Missing,T}}) where T = attribute_fields(T)
+
+"""
+    element_fields(T::Type)
+
+Return the set of fields for type `T` which are elements in the
+equivalent XML representation of `T`.
+
+The fallback method for this function assumes that all of `T`'s fields
+are elements, apart from any attribute fields and text field returned respectively by
+[`attribute_fields`](@ref) and [`text_field`](@ref),
+so where this is not the case, a method should be added for `T`.
+"""
+element_fields(::Type{T}) where T = (field for field in fieldnames(T)
+    if field ∉ attribute_fields(T) && field != text_field(T))
+element_fields(::Type{Union{Missing,T}}) where T = element_fields(T)
+element_fields(::Type{<:NumberType}) = ()
+
+"""
+    text_field(T::Type)
+
+Return the field of type `T` which is a simple text node in the equivalent
+XML representation of `T`, if there is one, and `nothing` if not.
+
+The fallback method for this function assumes that `T` does not contain
+a text node field.
+
+See also: [`has_text_field`](@ref).
+"""
+text_field(::Type) = nothing
+text_field(::Type{Union{Missing,T}}) where T = text_field(T)
+text_field(::Type{<:NumberType}) = :value
+
+"""
+    has_text_field(T::Type) -> ::Bool
+
+Return `true` if `T` has a simple text node field, and `false` otherwise.
+
+This function simply uses the result of [`text_field`](@ref), so a method
+should be added to that function for new types which have a text node field.
+"""
+has_text_field(::Type{T}) where T = text_field(T) !== nothing
+
 
 # Types derived from FloatType, with an uncertaintyDouble group,
 # which have units which are optional but can take only one value,
@@ -40,6 +113,10 @@ for (name, unit, docstring, range) in (
     end
     @eval begin
         """
+            $($name_string) <: StationXML.NumberType
+
+        # Constructors
+
             $($name_string)(value)
             $($name_string)(; value, plus_error=missing, minus_error=missing, unit=missing)
 
@@ -48,7 +125,7 @@ for (name, unit, docstring, range) in (
         # List of fields
         $(DocStringExtensions.TYPEDFIELDS)
         """
-        mutable struct $name
+        mutable struct $name <: NumberType
             "Value of observation"
             value::Float64
             "Absolute error in the positive direction."
@@ -72,7 +149,6 @@ for (name, unit, docstring, range) in (
             $(name)(value, plus_error, minus_error, unit)
 
         attribute_fields(::Type{$name}) = (:plus_error, :minus_error, :unit)
-        element_fields(::Type{$name}) = ()
 
         # Enforce the value of unit when using setproperty!
         function Base.setproperty!(x::$name, field::Symbol, value)
@@ -107,10 +183,6 @@ for (name, unit, docstring, range) in (
             end
             val
         end
-
-        # Conversion
-        Base.convert(::Type{$name}, value::Number) = $(name)(value)
-        Base.convert(::Type{N}, typ::$name) where {N<:Number} =  N(typ.value)
     end
 end
 
@@ -122,6 +194,10 @@ for (name, unit, docstring) in (
     name_string = String(name)
     @eval begin
         """
+            $($name_string) <: StationXML.NumberType
+
+        # Constructors
+
             $($name_string)(value)
             $($name_string)(; value, plus_error=missing, minus_error=missing, unit=$($unit))
 
@@ -130,7 +206,7 @@ for (name, unit, docstring) in (
         # List of fields
         $(DocStringExtensions.TYPEDFIELDS)
         """
-        mutable struct $name
+        mutable struct $name <: NumberType
             "Value of observation."
             value::Float64
             "Absolute error in the positive direction."
@@ -148,7 +224,6 @@ for (name, unit, docstring) in (
             $(name)(value, plus_error, minus_error, unit)
 
         attribute_fields(::Type{$name}) = (:plus_error, :minus_error, :unit)
-        element_fields(::Type{$name}) = ()
 
         function parse_node(::Type{$name}, node::EzXML.Node, warn::Bool=false)::$name
             val = $(name)(parse(Float64, node.content))
@@ -178,6 +253,10 @@ for (name, unit, docstring) in (
     error_string = "units of $name_string can only be `\"$unit\"`"
     @eval begin
         """
+            $($name_string) <: StationXML.NumberType
+
+        # Constructors
+
             $($name_string)(value, unit=$($unit))
             $($name_string)(; value, unit=$($unit))
 
@@ -186,7 +265,7 @@ for (name, unit, docstring) in (
         # List of fields
         $(DocStringExtensions.TYPEDFIELDS)
         """
-        mutable struct $name
+        mutable struct $name <: NumberType
             "Value in Hz."
             value::Float64
             "Units (must be `\"$($unit)\"`)."
@@ -203,7 +282,6 @@ for (name, unit, docstring) in (
         $(name)(; value, unit=missing) = $(name)(value, unit)
 
         attribute_fields(::Type{$name}) = (:unit,)
-        element_fields(::Type{$name}) = ()
 
         function Base.setproperty!(x::$name, field::Symbol, value)
             if field === :unit
@@ -247,6 +325,10 @@ for (name, range) in (
     unit_error_string = "units for $name must be `\"DEGREES\"`"
     @eval begin
         """
+            $($name_string) <: StationXML.NumberType
+
+        # Constructors
+
             $($name_string)(value, plus_error, minus_error, unit="DEGREES", datum="WGS84")
             $($name_string)(; value, plus_error=missing, minus_error=missing, unit="DEGREES", datum="WGS84")
 
@@ -256,7 +338,7 @@ for (name, range) in (
         # List of fields
         $(DocStringExtensions.TYPEDFIELDS)
         """
-        mutable struct $name
+        mutable struct $name <: NumberType
             "Coordinate in degrees."
             value::Float64
             "Absolute error in the positive direction."
@@ -287,7 +369,6 @@ for (name, range) in (
             $(name)(value, plus_error, minus_error, unit, datum)
 
         attribute_fields(::Type{$name}) = (:plus_error, :minus_error, :unit, :datum)
-        element_fields(::Type{$name}) = ()
 
         function Base.setproperty!(coord::$name, field::Symbol, value)
             if field === :unit
@@ -356,7 +437,7 @@ Representation of a floating-point number of a unitless quantity.
 # List of fields
 $(DocStringExtensions.TYPEDFIELDS)
 """
-@with_kw mutable struct FloatNoUnit
+@with_kw mutable struct FloatNoUnit <: NumberType
     "Value of observation."
     value::Float64
     "Absolute error in the positive direction."
@@ -367,7 +448,6 @@ $(DocStringExtensions.TYPEDFIELDS)
 end
 
 attribute_fields(::Type{FloatNoUnit}) = (:plus_error, :minus_error)
-element_fields(::Type{FloatNoUnit}) = ()
 
 function parse_node(::Type{FloatNoUnit}, node::EzXML.Node, warn::Bool=false)
     val = FloatNoUnit(parse(Float64, node.content))
@@ -393,7 +473,7 @@ Representation of floating-point numbers used as measurements.
 # List of fields
 $(DocStringExtensions.TYPEDFIELDS)
 """
-@with_kw mutable struct Float
+@with_kw mutable struct Float <: NumberType
     "Value of observation"
     value::Float64
     "Absolute error in the positive direction."
@@ -406,7 +486,6 @@ $(DocStringExtensions.TYPEDFIELDS)
 end
 
 attribute_fields(::Type{Float}) = (:plus_error, :minus_error, :unit)
-element_fields(::Type{Float}) = ()
 
 function parse_node(::Type{Float}, node::EzXML.Node, warn::Bool=false)
     val = Float(parse(Float64, node.content))

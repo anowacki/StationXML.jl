@@ -1,14 +1,13 @@
 # StationXML
 
-Read FDSN StationXML-format files describing seismic stations.
+Read and write [FDSN StationXML-format](https://www.fdsn.org/xml/station)
+files describing seismic stations.
 
 [![Build Status](https://travis-ci.org/anowacki/StationXML.jl.svg?branch=master)](https://travis-ci.org/anowacki/StationXML.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/qjedw1iel0d4vhh4?svg=true)](https://ci.appveyor.com/project/AndyNowacki/stationxml-jl)
 [![Coverage Status](https://coveralls.io/repos/github/anowacki/StationXML.jl/badge.svg?branch=master)](https://coveralls.io/github/anowacki/StationXML.jl?branch=master)
 
-The package mostly follows the [FDSN schema](https://www.fdsn.org/xml/station/fdsn-station-1.0.xsd), with some lesser-used field currently ignored.  It should read any
-schema-compatible StationXML file without error, but bug reports
-are welcome.
+The package follows the [FDSN schema](https://www.fdsn.org/xml/station/fdsn-station-1.0.xsd).
 
 ## Installation
 
@@ -21,10 +20,15 @@ import Pkg; Pkg.pkg"add https://github.com/anowacki/StationXML.jl"
 
 `StationXML` is mainly designed to be used by other modules such
 as [Seis](https://github.com/anowacki/Seis.jl) to process
-station information.
+station information.  Therefore, relatively few convenience functions
+are defined for working with `FDSNStationXML` objects.  However,
+the package aims to comprehensively document all objects and functions
+used.
+
+The basic type exported by StationXML.jl is `FDSNStationXML`.
 
 
-## Reading FDSN StationXML data
+### Reading FDSN StationXML data
 
 Two unexported functions are available for use in creating `FDSNStationXML` objects:
 
@@ -48,7 +52,7 @@ StationXML.FDSNStationXML
 
 ```
 
-## Writing data
+### Writing data
 
 Simply call `write` on an `FDSNStationXML` object to write it to disk or other
 `IO` stream:
@@ -57,7 +61,7 @@ Simply call `write` on an `FDSNStationXML` object to write it to disk or other
 julia> write("output_file.xml", sxml)
 ```
 
-## Accessing fields
+### Accessing fields
 
 You should access the fields of `FDSNStationXML` objects directly.  These match the
 StationXML specification directly, and are listed in each type's docstrings.
@@ -115,12 +119,13 @@ these names.  For example, using the [SeisRequests](https://github.com/anowacki/
 package to get all the broadband, high-gain channels stations in the GB network from 2012 to now:
 
 ```julia
-julia> using SeisRequests, Dates
+julia> using StationXML, SeisRequests, Dates
 
-julia> xml = get_request(
-                 FDSNStation(starttime=DateTime(2012), endtime=now(), network="GB",
-                             station="*", location="--", channel="BH?",
-                             level="channel")).body |> String;
+julia> sxml = get_request(
+                 FDSNStation(starttime=DateTime(2012), network="GB",
+                             location="--", channel="BH?",
+                             level="channel")).body |> String |>
+                 StationXML.readstring;
 
 julia> [s.code for s in stations(sxml)]
 28-element Array{String,1}:
@@ -156,7 +161,7 @@ julia> [s.code for s in stations(sxml)]
 ```
 
 
-## Accessor functions
+### Accessor functions
 
 You can easily construct vectors of all the networks, stations and channels in the StationXML
 using the following accessor functions:
@@ -180,7 +185,7 @@ The `channel_codes` function returns a list of all of the channel codes within
 a `FDSNStationXML` document or a `Network`.
 
 
-## Dot-access to arrays of objects
+### Dot-access to arrays of objects
 
 The module defines `getproperty` methods for conveniently accessing the fields of each member
 of arrays of `Network`s, `Station`s and `Channel`s.  So our previous example of finding all
@@ -201,23 +206,41 @@ We can equally access any other field of the items this way:
 ```julia
 julia> channels(sxml).longitude
 84-element Array{Float64,1}:
- -3.9087  
- -3.9087  
- -3.9087  
- -5.227299
- -5.227299
- -5.227299
- -6.110599
- -6.110599
- -6.110599
-...
+ StationXML.Longitude(-3.9087, missing, missing, missing, "WGS84")
+ StationXML.Longitude(-3.9087, missing, missing, missing, "WGS84")
+ StationXML.Longitude(-3.9087, missing, missing, missing, "WGS84")
+ StationXML.Longitude(-5.227299, missing, missing, missing, "WGS84")
+ StationXML.Longitude(-5.227299, missing, missing, missing, "WGS84")
+ StationXML.Longitude(-5.227299, missing, missing, missing, "WGS84")
+ StationXML.Longitude(-6.110599, missing, missing, missing, "WGS84")
+ StationXML.Longitude(-6.110599, missing, missing, missing, "WGS84")
+ StationXML.Longitude(-6.110599, missing, missing, missing, "WGS84")
+ ⋮
 ```
 
 
-## Structure of objects
+### Structure of objects
 
 `StationXML` represents the XML as laid out in the StationXML schema.
-Therefore, it aims to contain almost all the information which can
-be contained in a StationXML file.  Elements and attributes of the XML
+Therefore, it contains all the information in a StationXML file which
+is part of the StationXML standard.  Elements and attributes of the XML
 are fields within structures nested several layers deep.
 
+
+## Contributing
+
+### Bugs and omissions
+StationXML.jl should read any schema-compatible StationXML
+file without error, therefore any examples of documents failing are very
+warmly welcomed as are all bug reports.
+
+Please [open an issue](https://github.com/anowacki/StationXML.jl/issues/new)
+with a link to the document which is causing problems and as much
+information as possible about how to reproduce your error.
+
+### Features
+If you would like to add a feature to StationXML, this will be seriously
+considered.  The package aims to be fairly minimal so please think very
+carefully before adding large dependencies.
+
+New code for the repo should come via a pull request.

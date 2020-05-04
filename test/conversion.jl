@@ -14,7 +14,7 @@ using InteractiveUtils: subtypes
 
     @testset "EnumeratedStruct" begin
         @testset "$T" for T in subtypes(StationXML.EnumeratedStruct)
-            val = rand(StationXML.permitted_values(T))
+            val = first(StationXML.permitted_values(T))
             @test convert(T, val).value == val
             @test convert(String, T(val)) == val
         end

@@ -33,4 +33,11 @@ using InteractiveUtils: subtypes
             @test convert(StationXML.Comment, comment).value == comment
         end
     end
+
+    @testset "Units" begin
+        let unit = "AMPERES"
+            @test convert(StationXML.Units, unit).name == unit
+            @test convert(String, StationXML.Units(unit)) == unit
+        end
+    end
 end

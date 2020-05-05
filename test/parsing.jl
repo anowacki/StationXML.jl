@@ -40,4 +40,35 @@ import EzXML
             end
         end
     end
+
+    @testset "Version 1.1" begin
+        # Optional CreationDate for Station
+        let sxml = StationXML.readstring("""
+                <FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:iris="http://www.fdsn.org/xml/station/1/iris" xsi:schemaLocation="http://www.fdsn.org/xml/station/1 http://www.fdsn.org/xml/station/fdsn-station-1.1.xsd" schemaVersion="1.1">
+                 <Source>IRIS-DMC</Source>
+                 <Sender>IRIS-DMC</Sender>
+                 <Module>IRIS WEB SERVICE: fdsnws-station | version: 1.1.45</Module>
+                 <ModuleURI>http://service.iris.edu/fdsnws/station/1/query?nodata=204</ModuleURI>
+                 <Created>2020-05-05T19:13:31</Created>
+                 <Network code="1B" startDate="2014-01-01T00:00:00" endDate="2014-12-31T23:59:59" restrictedStatus="open">
+                  <Description>Sweetwater Array (1B)</Description>
+                  <TotalNumberStations>2268</TotalNumberStations>
+                  <SelectedNumberStations>2268</SelectedNumberStations>
+                  <Station code="5R536" startDate="2014-01-01T00:00:00" endDate="2014-12-12T23:59:59" restrictedStatus="open" iris:alternateNetworkCodes=".UNRESTRICTED">
+                   <Latitude>32.748402</Latitude>
+                   <Longitude>-100.535698</Longitude>
+                   <Elevation>634.7</Elevation>
+                   <Site>
+                    <Name>207536</Name>
+                   </Site>
+                   <TotalNumberChannels>1</TotalNumberChannels>
+                   <SelectedNumberChannels>0</SelectedNumberChannels>
+                  </Station>
+                 </Network>
+                </FDSNStationXML>
+                """)
+            @test sxml.schema_version == "1.1"
+            @test sxml.network[1].station[1].creation_date === missing
+        end
+    end
 end

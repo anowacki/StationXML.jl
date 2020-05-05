@@ -145,8 +145,10 @@ $(DocStringExtensions.TYPEDFIELDS)
      represents any contact person, it also has its own optional Agency
      element."
     operator::Vector{Operator} = Operator[]
-    "Date and time (UTC) when the station was first installed."
-    creation_date::DateTime
+    "Date and time (UTC) when the station was first installed.
+     **Note that this field is mandatory in StationXML v1.0, but optional
+     in StationXML v1.1.**"
+    creation_date::M{DateTime} = missing
     # FIXME: Test whether blank values need to be handled as a M{DateTime} field
     "Date and time (UTC) when the station was terminated or
      will be terminated. A blank value should be assumed to mean that the

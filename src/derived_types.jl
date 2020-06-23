@@ -53,10 +53,14 @@ object.
 $(DocStringExtensions.TYPEDFIELDS)
 """
 @with_kw mutable struct Sensitivity
-    "A scalar that, when applied to the data values, converts the data to different units (e.g. Earth units)."
-    value::Float64
-    "The frequency (in Hertz) at which the Value is valid."
-    frequency::Float64
+    "A scalar that, when applied to the data values, converts the data to different units (e.g. Earth units).
+     Althought this must be present according to the specification, it can be
+     `missing` here."
+    value::M{Float64} = missing
+    "The frequency (in Hertz) at which the Value is valid.
+     Althought this must be present according to the specification, it can be
+     `missing` here."
+    frequency::M{Float64} = missing
     "The units of the data as input from the perspective
 	 of data acquisition. After correcting data for this response, these
 	 would be the resulting units."

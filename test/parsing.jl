@@ -71,4 +71,40 @@ import EzXML
             @test sxml.network[1].station[1].creation_date === missing
         end
     end
+
+    @testset "Pressure channel" begin
+        let node = EzXML.root(EzXML.parsexml("""
+                <Channel code="LDO" locationCode="00" startDate="2008-10-10T00:00:00" restrictedStatus="open">
+                 <Latitude>10.00207</Latitude>
+                 <Longitude>-84.111389</Longitude>
+                 <Elevation>1186</Elevation>
+                 <Depth>0</Depth>
+                 <Azimuth>0</Azimuth>
+                 <Dip>0</Dip>
+                 <Type>CONTINUOUS</Type>
+                 <Type>WEATHER</Type>
+                 <SampleRate>1E00</SampleRate>
+                 <ClockDrift>1E-04</ClockDrift>
+                 <Sensor>
+                  <Description>Microbaro VAISALA</Description>
+                 </Sensor>
+                 <Response>
+                 <InstrumentSensitivity>
+                   <InputUnits>
+                     <Name>PA</Name>
+                     <Description>PRESSURE in Pascals</Description>
+                   </InputUnits>
+                   <OutputUnits>
+                     <Name>COUNTS</Name>
+                     <Description>DIGITAL UNIT in Counts</Description>
+                   </OutputUnits>
+                 </InstrumentSensitivity>
+                 </Response>
+                </Channel>
+                    """))
+            channel = StationXML.parse_node(StationXML.Channel, node)
+            @test channel.response.instrument_sensitivity.value === missing
+            @test channel.response.instrument_sensitivity.input_units.name == "PA"
+        end
+    end
 end

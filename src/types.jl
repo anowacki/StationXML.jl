@@ -29,6 +29,8 @@ $(DocStringExtensions.TYPEDFIELDS)
 @with_kw struct Channel
     # BaseNodeType fields
     description::M{String} = missing
+    "Persistent identifier for this `Channel`"
+    identifier::Vector{Identifier} = Identifier[]
     comment::Vector{Comment} = Comment[]
     "Channel's code (e.g., `\"BHE\"`)."
     code::String
@@ -36,6 +38,8 @@ $(DocStringExtensions.TYPEDFIELDS)
     start_date::M{DateTime} = missing
     "End date of operation of this channel.  May be `missing`."
     end_date::M{DateTime} = missing
+    "A data source identifier in URI form"
+    source_id::M{String} = missing
     "Information on whether the data in this channel are restricted, open,
      or otherwise.  (See [`RestrictedStatus`](@ref StationXML.RestrictedStatus).)"
     restricted_status::M{RestrictedStatus} = missing
@@ -109,6 +113,8 @@ $(DocStringExtensions.TYPEDFIELDS)
 @with_kw struct Station
     # BaseNodeType fields
     description::M{String} = missing
+    "Persistent identifier for this `Station`"
+    identifier::Vector{Identifier} = Identifier[]
     comment::Vector{Comment} = Comment[]
     "Station's code, e.g. `\"ANMO\"`."
     code::String
@@ -116,6 +122,8 @@ $(DocStringExtensions.TYPEDFIELDS)
     start_date::M{DateTime} = missing
     "End date of operation of the station."
     end_date::M{DateTime} = missing
+    "A data source identifier in URI form"
+    source_id::M{String} = missing
     "Information on whether the data from this station are restricted, open,
      or otherwise.  (See [`RestrictedStatus`](@ref StationXML.RestrictedStatus).)"
     restricted_status::M{RestrictedStatus} = missing
@@ -183,11 +191,15 @@ $(DocStringExtensions.TYPEDFIELDS)
 @with_kw struct Network
     # BaseNodeType fields
     description::M{String} = missing
+    "Persistent identifier for this `Network`"
+    identifier::Vector{Identifier} = Identifier[]
     comment::Vector{Comment} = Comment[]
     "Network's code (e.g., `\"IU\"`)."
     code::String
     start_date::M{DateTime} = missing
     end_date::M{DateTime} = missing
+    "A data source identifier in URI form"
+    source_id::M{String} = missing
     "Information on whether the data in this network are restricted, open,
      or otherwise.  (See [`RestrictedStatus`](@ref StationXML.RestrictedStatus).)"
     restricted_status::M{RestrictedStatus} = missing
@@ -209,9 +221,9 @@ $(DocStringExtensions.TYPEDFIELDS)
      in this query."
     station::Vector{Station} = Station[]
 
-    function Network(description, comment, code, start_date, end_date,
-            restricted_status, alternate_code, historical_code, total_number_stations,
-            selected_number_stations, station)
+    function Network(description, identifier, comment, code, start_date, end_date,
+            source_id, restricted_status, alternate_code, historical_code, operator,
+            total_number_stations, selected_number_stations, station)
         if total_number_stations !== missing
             total_number_stations >= 0 ||
                 throw(ArgumentError("total_number_stations must be 0 or more"))
@@ -220,9 +232,9 @@ $(DocStringExtensions.TYPEDFIELDS)
             selected_number_stations >= 0 ||
                 throw(ArgumentError("selected_number_stations must be 0 or more"))
         end
-        new(description, comment, code, start_date, end_date,
-            restricted_status, alternate_code, historical_code, total_number_stations,
-            selected_number_stations, station)
+        new(description, identifier, comment, code, start_date, end_date,
+            source_id, restricted_status, alternate_code, historical_code, operator,
+            total_number_stations, selected_number_stations, station)
     end
 end
 

@@ -20,6 +20,13 @@ using InteractiveUtils: subtypes
         end
     end
 
+    @testset "Identifier" begin
+        let value = "some random text"
+            @test convert(String, StationXML.Identifier(value)) == value
+            @test convert(StationXML.Identifier, value).value == value
+        end
+    end
+
     @testset "Email" begin
         let address = "test.name@example.com"
             @test convert(String, StationXML.Email(address)) == address

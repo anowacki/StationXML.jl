@@ -106,6 +106,8 @@ function xml_attribute_name(s::Symbol)
         return "startDate"
     elseif s === :end_date
         return "endDate"
+    elseif s === :source_id
+        return "sourceID"
     elseif s === :restricted_status
         return "restrictedStatus"
     elseif s === :alternate_code

@@ -504,6 +504,45 @@ function parse_node(::Type{Float}, node::EzXML.Node, warn::Bool=false)
 end
 
 """
+    Identifier(value)
+
+A type to document persistent identifiers. Identifier values should be
+specified without a URI scheme (prefix).  Instead, the identifier type
+should be stored in the `type` field.
+
+!!! compat "StationXML 1.1"
+    `Identifier` was introduced in StationXML v1.1.
+
+# List of fields
+$(DocStringExtensions.TYPEDFIELDS)
+"""
+@with_kw mutable struct Identifier
+    value::String
+    type::M{String}
+    Identifier(value, type=missing) = new(value, type)
+end
+
+Base.convert(::Type{Identifier}, val::AbstractString) = Identifier(val)
+Base.convert(::Type{S}, id::Identifier) where {S<:AbstractString} = S(id.value)
+
+attribute_fields(::Type{Identifier}) = (:type,)
+element_fields(::Type{Identifier}) = ()
+text_field(::Type{Identifier}) = :value
+has_text_field(::Type{Identifier}) = true
+
+function parse_node(::Type{Identifier}, node::EzXML.Node, warn::Bool=false)
+    val = Identifier(node.content)
+    for att in EzXML.eachattribute(node)
+        if att.name == "type"
+            val.type = att.content
+        else
+            warn && @warn("Unexpected attribute \"$(att.name)\" for Identifier")
+        end
+    end
+    val
+end
+
+"""
     ExternalReference(uri, description)
     ExternalReference(; uri, description)
 
@@ -742,45 +781,6 @@ const BASE_FILTER_FIELDS_DOCSTRING = """
 
 """
 
-# """
-# A base node type for derivation from: Network, Station and Channel types.
-# """
-@pour BaseNode begin
-    description::M{String} = missing
-    comment::Vector{Comment} = Comment[]
-    code::String
-    start_date::M{DateTime} = missing
-    end_date::M{DateTime} = missing
-    restricted_status::M{RestrictedStatus} = missing
-    # "A code used for display or association, alternate to the SEED-compliant code."
-    alternate_code::M{String} = missing
-    # "A previously used code if different from the current code."
-    historical_code::M{String} = missing
-end
-
 "Attributes of the BaseNode fields"
-const BASE_NODE_ATTRIBUTES = (:code, :start_date, :end_date,
+const BASE_NODE_ATTRIBUTES = (:code, :start_date, :end_date, :source_id,
     :restricted_status, :alternate_code, :historical_code)
-
-"Markdown text to append to docstring of types which include the `BaseNode` fields"
-const BASE_NODE_FIELDS_DOCSTRING = """"
-- `description::Union{String,Missing}`
-  Description of the site (free text).  Default: missing
-- `comment::Vector{Comment}`
-  Set of [`Comment`](@ref StationXML.Comment)s.  Default: Comment[]
-- `code::String`
-  Code for this instance.
-- `start_date::Union{DateTime,Missing}`
-  Beginning time of operation.  Deafult: missing
-- `end_date::Union{DateTime,Missing}`
-  End time of operation.  Default: missing
-- `restricted_status::Union{RestrictedStatus,Missing}`
-  A description of the access status of this instance.
-  See [`RestrictedStatus`](@ref StationXML.RestrictedStatus)
-  Default missing
-- `alternate_code::Union{String,Missing}`
-  A code used for display or association, alternate to the SEED-compliant code.
-  Default: missing
-- `historical_code::Union{String,Missing}`
-  A previously used code if different from the current code.  Default: missing
-"""

@@ -41,20 +41,31 @@ import EzXML
         end
     end
 
+    # Changes from v1.0 to v1.1
     @testset "Version 1.1" begin
-        # Optional CreationDate for Station
         let sxml = StationXML.readstring("""
-                <FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:iris="http://www.fdsn.org/xml/station/1/iris" xsi:schemaLocation="http://www.fdsn.org/xml/station/1 http://www.fdsn.org/xml/station/fdsn-station-1.1.xsd" schemaVersion="1.1">
+                <FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:iris="http://www.fdsn.org/xml/station/1/iris"
+                  xsi:schemaLocation="http://www.fdsn.org/xml/station/1 http://www.fdsn.org/xml/station/fdsn-station-1.1.xsd"
+                  schemaVersion="1.1">
                  <Source>IRIS-DMC</Source>
                  <Sender>IRIS-DMC</Sender>
                  <Module>IRIS WEB SERVICE: fdsnws-station | version: 1.1.45</Module>
                  <ModuleURI>http://service.iris.edu/fdsnws/station/1/query?nodata=204</ModuleURI>
                  <Created>2020-05-05T19:13:31</Created>
-                 <Network code="1B" startDate="2014-01-01T00:00:00" endDate="2014-12-31T23:59:59" restrictedStatus="open">
+                 <Network code="1B" startDate="2014-01-01T00:00:00" endDate="2014-12-31T23:59:59"
+                   restrictedStatus="open" sourceID="mailto:net@example.com">
                   <Description>Sweetwater Array (1B)</Description>
                   <TotalNumberStations>2268</TotalNumberStations>
+                  <Identifier type="some type">Identifying text</Identifier>
+                  <Identifier type="another type">More text</Identifier>
                   <SelectedNumberStations>2268</SelectedNumberStations>
-                  <Station code="5R536" startDate="2014-01-01T00:00:00" endDate="2014-12-12T23:59:59" restrictedStatus="open" iris:alternateNetworkCodes=".UNRESTRICTED">
+                  <Station code="5R536" startDate="2014-01-01T00:00:00"
+                    endDate="2014-12-12T23:59:59" restrictedStatus="open"
+                    sourceID="https://example.com"
+                    iris:alternateNetworkCodes=".UNRESTRICTED">
+                   <Identifier>ID</Identifier>
                    <Latitude>32.748402</Latitude>
                    <Longitude>-100.535698</Longitude>
                    <Elevation>634.7</Elevation>
@@ -62,13 +73,39 @@ import EzXML
                     <Name>207536</Name>
                    </Site>
                    <TotalNumberChannels>1</TotalNumberChannels>
-                   <SelectedNumberChannels>0</SelectedNumberChannels>
+                   <SelectedNumberChannels>1</SelectedNumberChannels>
+                   <Channel code="SXZ" locationCode="00">
+                    <Identifier type="A">B</Identifier>
+                    <Latitude>1</Latitude>
+                    <Longitude>2</Longitude>
+                    <Elevation>3</Elevation>
+                    <Depth>4</Depth>
+                   </Channel>
                   </Station>
                  </Network>
                 </FDSNStationXML>
                 """)
             @test sxml.schema_version == "1.1"
-            @test sxml.network[1].station[1].creation_date === missing
+            @testset "Add Identifier" begin
+                @test length(sxml.network[1].identifier) == 2
+                @test sxml.network[1].identifier[1].value == "Identifying text"
+                @test sxml.network[1].identifier[1].type == "some type"
+                @test sxml.network[1].identifier[2].value == "More text"
+                @test sxml.network[1].identifier[2].type == "another type"
+                @test length(sxml.network[1].station[1].identifier) == 1
+                @test sxml.network[1].station[1].identifier[1].value == "ID"
+                @test sxml.network[1].station[1].identifier[1].type === missing
+                @test sxml.network[1].station[1].channel[1].identifier[1].value == "B"
+                @test sxml.network[1].station[1].channel[1].identifier[1].type == "A"
+            end
+            @testset "Optional CreationDate" begin
+                @test sxml.network[1].station[1].creation_date === missing
+            end
+            @testset "Add sourceID" begin
+                @test sxml.network[1].source_id == "mailto:net@example.com"
+                @test sxml.network[1].station[1].source_id == "https://example.com"
+                @test sxml.network[1].station[1].channel[1].source_id === missing
+            end
         end
     end
 
@@ -101,7 +138,7 @@ import EzXML
                  </InstrumentSensitivity>
                  </Response>
                 </Channel>
-                    """))
+                """))
             channel = StationXML.parse_node(StationXML.Channel, node)
             @test channel.response.instrument_sensitivity.value === missing
             @test channel.response.instrument_sensitivity.input_units.name == "PA"

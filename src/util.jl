@@ -94,6 +94,8 @@ function xml_attribute_name(s::Symbol)
         return "plusError"
     elseif s === :minus_error
         return "minusError"
+    elseif s === :measurement_method
+        return "measurementMethod"
     elseif s === :datum
         return "datum"
     elseif s === :description

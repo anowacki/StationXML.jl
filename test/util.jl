@@ -19,6 +19,7 @@ using EzXML: ElementNode
             @test f("FrequencyDBVariation") == :frequency_db_variation
             @test f("URI") == :uri
             @test f("sourceID") == :source_id
+            @test f("measurementMethod") == :measurement_method
         end
         let f = StationXML.xml_element_name
             @test f(:module_name) == "Module"
@@ -38,6 +39,7 @@ using EzXML: ElementNode
             @test f(:restricted_status) == "restrictedStatus"
             @test f(:number) == "number"
             @test f(:source_id) == "sourceID"
+            @test f(:measurement_method) == "measurementMethod"
             @test_throws ArgumentError f(:made_up_attribute)
         end
         # Round-trip all names in the spec

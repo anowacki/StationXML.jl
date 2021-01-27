@@ -225,6 +225,11 @@ For QuakeML documents, all attributes should be `ResourceReference`s.
 """
 function add_attributes!(node, value::T) where T
     for field in attribute_fields(T)
+        # Skip fields read from v1.0 but removed from v1.1
+        if has_removed_fields(T) && field in removed_fields(T)
+            @warn("Not writing field $T: removed in StationXML v1.1")
+            continue
+        end
         content = getfield(value, field)
         content === missing && continue
         add_attribute!(node, field, content)
@@ -251,6 +256,11 @@ is the name of the field which contains `value`.
 function add_elements!(node, parent_field, value::T) where T
     for field in element_fields(T)
         @debug("adding $parent_field: $field")
+        # Skip fields read from v1.0 but removed from v1.1
+        if has_removed_fields(T) && field in removed_fields(T)
+            @warn("Not writing field $T: removed in StationXML v1.1")
+            continue
+        end
         content = getfield(value, field)
         if content === missing
             continue

@@ -226,6 +226,7 @@ include("util.jl")
 include("base_types.jl")
 include("derived_types.jl")
 include("types.jl")
+include("deprecations.jl")
 include("accessors.jl")
 include("io.jl")
 

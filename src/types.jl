@@ -64,6 +64,8 @@ $(DocStringExtensions.TYPEDFIELDS)
     azimuth::M{Azimuth} = missing
     "Dip of the instrument in degrees, down from horizontal."
     dip::M{Dip} = missing
+    "Elevation of the water surface in meters for underwater sites, where 0 is sea level."
+    water_level::M{Float} = missing
     "The type of data this channel collects. Corresponds to
      channel flags in SEED blockette 52. The SEED volume producer could
      use the first letter of an Output value as the SEED channel flag."
@@ -75,7 +77,8 @@ $(DocStringExtensions.TYPEDFIELDS)
     "Sampling rate of the channel in number of samples per number of seconds."
     sample_rate_ratio::M{SampleRateRatio} = missing
     # end of SampleRateGroup fields
-    "The storage format of the recorded data (e.g. SEED)."
+    "The storage format of the recorded data (e.g. SEED).
+     **Removed in StationXML v1.1.**"
     storage_format::M{String} = missing
     "A tolerance value, measured in seconds per sample, used as a threshold for time
      error detection in data from the channel."
@@ -84,7 +87,7 @@ $(DocStringExtensions.TYPEDFIELDS)
     sensor::M{Equipment} = missing
     pre_amplifier::M{Equipment} = missing
     data_logger::M{Equipment} = missing
-    equipment::M{Equipment} = missing
+    equipment::Vector{Equipment} = Equipment[]
     "The transfer function describing how ground motion is translated into
     digital counts."
     response::M{Response} = missing
@@ -99,6 +102,8 @@ Return the fields of type `T` which are stored as attributes in the
 StationXML specification
 """
 attribute_fields(::Type{Channel}) = (BASE_NODE_ATTRIBUTES..., :location_code)
+
+removed_fields(::Type{Channel}) = (:storage_format,)
 
 """
     Station
@@ -141,6 +146,8 @@ $(DocStringExtensions.TYPEDFIELDS)
     "These fields describe the location of the station
      using geopolitical entities (country, city, etc.)."
     site::Site
+    "Elevation of the water surface in meters for underwater sites, where 0 is sea level."
+    water_level::M{Float} = missing
     "Type of vault, e.g. WWSSN, tunnel, transportable array, etc."
     vault::M{String} = missing
     "Type of rock and/or geologic formation."
@@ -208,6 +215,8 @@ $(DocStringExtensions.TYPEDFIELDS)
     "A previously used code if different from the current code."
     historical_code::M{String} = missing
     # end of BaseNodeType fields
+    "An operating agency and associated contact persons."
+    operator::Vector{Operator} = Operator[]
     "The total number of stations contained in this
 	 network, including inactive or terminated stations."
     total_number_stations::M{Int} = missing
@@ -281,7 +290,7 @@ const COMPARABLE_TYPES = Union{Missing, Float64, String, DateTime}
 for name in names(StationXML, all=true)
     name_str = String(name)
     if occursin(r"^[A-Z]", name_str) && !occursin(r"^BASE", name_str)
-        name in (:M, :COMPARABLE_TYPES, :StationXML) && continue
+        name in (:M, :COMPARABLE_TYPES, :StationXML, :Numerator, :Denominator) && continue
         getfield(StationXML, name) isa DataType || continue
         @eval Base.:(==)(a::$name, b::$name) = a === b ? true : local_equals(a, b)
     end

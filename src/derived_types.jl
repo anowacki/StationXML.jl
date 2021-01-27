@@ -54,11 +54,11 @@ $(DocStringExtensions.TYPEDFIELDS)
 """
 @with_kw mutable struct Sensitivity
     "A scalar that, when applied to the data values, converts the data to different units (e.g. Earth units).
-     Althought this must be present according to the specification, it can be
+     Although this must be present according to the specification, it can be
      `missing` here."
     value::M{Float64} = missing
-    "The frequency (in Hertz) at which the Value is valid.
-     Althought this must be present according to the specification, it can be
+    "The frequency (in Hertz) at which the `value` is valid.
+     Although this must be present according to the specification, it can be
      `missing` here."
     frequency::M{Float64} = missing
     "The units of the data as input from the perspective
@@ -205,6 +205,63 @@ attribute_fields(::Type{FIR}) = BASE_FILTER_ATTRIBUTES
     ("ANALOG (RADIANS/SECOND)", "ANALOG (HERTZ)", "DIGITAL"))
 
 """
+    Coefficient
+
+Extension of [`FloatNoUnit`](@ref StationXML.FloatNoUnit) with an
+additional `number` attribute, used as the `numerator` and `denominator`
+of [`Coefficients`](@ref StationXML.Coefficients) and
+[`Polynomial`](@ref StationXML.Polynomial).
+
+# List of fields
+$(DocStringExtensions.TYPEDFIELDS)
+"""
+@with_kw struct Coefficient <: NumberType
+    "Value of the coefficient (no unit)"
+    value::Float64
+    "Absolute error in the positive direction."
+    plus_error::M{Float64} = missing
+    "Absolute error in the negative direction (i.e., this value should be positive)."
+    minus_error::M{Float64} = missing
+    "Method used to make measurement"
+    measurement_method::M{String} = missing
+    "Number of the coefficient"
+    number::M{Int} = missing
+
+    function Coefficient(value, plus_error=missing, minus_error=missing,
+            measurement_method=missing, number=missing)
+        number !== missing && number < 0 &&
+            throw(ArgumentError("number must be 0 or greater"))
+        new(value, plus_error, minus_error, measurement_method, number)
+    end
+end
+
+attribute_fields(::Type{Coefficient}) = (:plus_error, :minus_error,
+    :measurement_method, :number)
+
+function parse_node(::Type{Coefficient}, node::EzXML.Node, warn::Bool=false)
+    value = parse(Float64, node.content)
+    plus_error = minus_error = measurement_method = number = missing
+    for att in EzXML.eachattribute(node)
+        name = att.name
+        if name == "number"
+            number = parse(Int, att.content)
+        elseif name == "plusError"
+            plus_error = parse(Float64, att.content)
+        elseif name == "minusError"
+            minus_error = parse(Float64, att.content)
+        elseif name == "measurementMethod"
+            measurement_method = att.content
+        else
+            warn && @warn("unexpected attribute $(att.name) for NumeratorCoefficient")
+        end
+    end
+    Coefficient(value, plus_error, minus_error, measurement_method, number)
+end
+
+const Numerator = Coefficient
+const Denominator = Coefficient
+
+"""
     Coefficients(; kwargs...)
 
 Response: coefficients for FIR filter. Laplace transforms or IIR
@@ -218,8 +275,8 @@ $(DocStringExtensions.TYPEDFIELDS)
     @BaseFilter
     "Type of the transfer function (see [`CfTransferFunction`](@ref)."
     cf_transfer_function_type::CfTransferFunction
-    numerator::Vector{Float} = Float[]
-    denominator::Vector{Float} = Float[]
+    numerator::Vector{Numerator} = Numerator[]
+    denominator::Vector{Denominator} = Denominator[]
 end
 
 attribute_fields(::Type{Coefficients}) = BASE_FILTER_ATTRIBUTES
@@ -254,50 +311,6 @@ $(DocStringExtensions.TYPEDFIELDS)
 end
 
 attribute_fields(::Type{ResponseList}) = BASE_FILTER_ATTRIBUTES
-
-"""
-    Coefficient
-
-# List of fields
-$(DocStringExtensions.TYPEDFIELDS)
-"""
-@with_kw struct Coefficient <: NumberType
-    "Value of the coefficient (no unit)"
-    value::Float64
-    "Absolute error in the positive direction."
-    plus_error::M{Float64} = missing
-    "Absolute error in the negative direction (i.e., this value should be positive)."
-    minus_error::M{Float64} = missing
-    "Number of the coefficient"
-    number::M{Int} = missing
-
-    function Coefficient(value, plus_error=missing, minus_error=missing, number=missing)
-        number !== missing && number < 0 &&
-            throw(ArgumentError("number must be 0 or greater"))
-        new(value, plus_error, minus_error, number)
-    end
-end
-
-attribute_fields(::Type{Coefficient}) = (:plus_error, :minus_error, :number)
-
-function parse_node(::Type{Coefficient}, node::EzXML.Node, warn::Bool=false)
-    value = parse(Float64, node.content)
-    local number
-    plus_error = minus_error = missing
-    for att in EzXML.eachattribute(node)
-        field = transform_name(att.name)
-        if field === :number
-            number = parse(Int, att.content)
-        elseif field === :plus_error
-            plus_error = parse(Float64, att.content)
-        elseif field === :minus_error
-            minus_error = parse(Float64, att.content)
-        else
-            warn && @warn("unexpected attribute $(att.name) for NumeratorCoefficient")
-        end
-    end
-    Coefficient(value, plus_error, minus_error, number)
-end
 
 @enumerated_struct(Approximation, ("MACLAURIN",))
 
@@ -433,12 +446,15 @@ An operating agency and associated contact persons. If
 there are multiple operators, each one should be encapsulated within an
 Operator tag. Since the Contact element is a generic type that
 represents any contact person, it also has its own optional `agency`
-field.
+field.  It is expected that typically the contact’s optional `agency`
+field will match the `Operator` `agency`. Only contacts appropriate for the
+enclosing element should be included in the `Operator` object.
 
 # List of fields
 $(DocStringExtensions.TYPEDFIELDS)
 """
 @with_kw struct Operator
+    "Only one agency is allowed in StationXML v1.1."
     agency::Vector{String} = String[]
     contact::Vector{Person} = Person[]
     web_site::M{String} = missing

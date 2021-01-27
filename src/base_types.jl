@@ -132,23 +132,27 @@ for (name, unit, docstring, range) in (
             plus_error::M{Float64}
             "Absolute error in the negative direction (i.e., this value should be positive)."
             minus_error::M{Float64}
+            "Method used to make measurement"
+            measurement_method::M{String}
             "Units of observation (can only be `\"$($unit)\"`)."
             unit::M{String}
 
-            function $(name)(value, plus_error=missing, minus_error=missing, unit=missing)
+            function $(name)(value, plus_error=missing, minus_error=missing,
+                    measurement_method=missing, unit=missing)
                 $optional_constructor_value_check
                 if unit !== missing
                     unit == $unit || throw(ArgumentError("units of $($name_string) must be `\"$($unit)\"`"))
                 end
-                new(value, plus_error, minus_error, unit)
+                new(value, plus_error, minus_error, measurement_method, unit)
             end
         end
 
         # Keyword constructor
-        $(name)(; value, plus_error=missing, minus_error=missing, unit=missing) =
-            $(name)(value, plus_error, minus_error, unit)
+        $(name)(; value, plus_error=missing, minus_error=missing,
+                measurement_method=missing, unit=missing) =
+            $(name)(value, plus_error, minus_error, measurement_method, unit)
 
-        attribute_fields(::Type{$name}) = (:plus_error, :minus_error, :unit)
+        attribute_fields(::Type{$name}) = (:plus_error, :minus_error, :measurement_method, :unit)
 
         # Enforce the value of unit when using setproperty!
         function Base.setproperty!(x::$name, field::Symbol, value)
@@ -175,6 +179,8 @@ for (name, unit, docstring, range) in (
                     val.plus_error = parse(Float64, att.content)
                 elseif att.name == "minusError"
                     val.minus_error = parse(Float64, att.content)
+                elseif att.name == "measurementMethod"
+                    val.measurement_method = att.content
                 elseif att.name == "unit"
                     val.unit = att.content
                 else
@@ -213,17 +219,21 @@ for (name, unit, docstring) in (
             plus_error::M{Float64}
             "Absolute error in the negative direction (i.e., this value should be positive)."
             minus_error::M{Float64}
+            "Method used to make measurement"
+            measurement_method::M{String}
             "Units of observation (defaults to `\"$($unit)\"`)."
             unit::M{String}
 
-            $(name)(value, plus_error=missing, minus_error=missing, unit=$unit) =
-                new(value, plus_error, minus_error, unit)
+            $(name)(value, plus_error=missing, minus_error=missing,
+                    measurement_method=missing, unit=$unit) =
+                new(value, plus_error, minus_error, measurement_method, unit)
         end
 
-        $(name)(; value, plus_error=missing, minus_error=missing, unit=$unit) =
-            $(name)(value, plus_error, minus_error, unit)
+        $(name)(; value, plus_error=missing, minus_error=missing,
+                measurement_method=missing, unit=$unit) =
+            $(name)(value, plus_error, minus_error, measurement_method, unit)
 
-        attribute_fields(::Type{$name}) = (:plus_error, :minus_error, :unit)
+        attribute_fields(::Type{$name}) = (:plus_error, :minus_error, :measurement_method, :unit)
 
         function parse_node(::Type{$name}, node::EzXML.Node, warn::Bool=false)::$name
             val = $(name)(parse(Float64, node.content))
@@ -232,6 +242,8 @@ for (name, unit, docstring) in (
                     val.plus_error = parse(Float64, att.content)
                 elseif att.name == "minusError"
                     val.minus_error = parse(Float64, att.content)
+                elseif att.name == "measurementMethod"
+                    val.measurement_method = att.content
                 elseif att.name == "unit"
                     val.unit = att.content
                 else
@@ -329,8 +341,8 @@ for (name, range) in (
 
         # Constructors
 
-            $($name_string)(value, plus_error, minus_error, unit="DEGREES", datum="WGS84")
-            $($name_string)(; value, plus_error=missing, minus_error=missing, unit="DEGREES", datum="WGS84")
+            $($name_string)(value, plus_error, minus_error, measurement_method, unit="DEGREES", datum="WGS84")
+            $($name_string)(; value, plus_error=missing, minus_error=missing, measurement_method=missing, unit="DEGREES", datum="WGS84")
 
         $($name_string) coordinate, measured in degrees.  The `datum` can be specified
         and defaults to `"WGS84"`.
@@ -345,13 +357,15 @@ for (name, range) in (
             plus_error::M{Float64}
             "Absolute error in the negative direction (i.e., this value should be positive)."
             minus_error::M{Float64}
+            "Method used to make measurement"
+            measurement_method::M{String}
             "Units of observation (must be `\"DEGREES\"`)."
             unit::M{String}
             "Spheroid datum on which coordinate is measured."
             datum::M{String}
 
             function $(name)(value, plus_error=missing, minus_error=missing,
-                    unit=missing, datum="WGS84")
+                    measurement_method=missing, unit=missing, datum="WGS84")
                 $(range[1]) <= value <= $(range[2]) ||
                     throw(ArgumentError($value_error_string))
                 if unit !== missing
@@ -360,15 +374,16 @@ for (name, range) in (
                 if datum !== missing
                     datum = xs_nmtoken_or_throw(datum)
                 end
-                new(value, plus_error, minus_error, unit, datum)
+                new(value, plus_error, minus_error, measurement_method, unit, datum)
             end
         end
 
         # Keyword constructor
-        $(name)(; value, plus_error=missing, minus_error=missing, unit=missing, datum="WGS84") =
-            $(name)(value, plus_error, minus_error, unit, datum)
+        $(name)(; value, plus_error=missing, minus_error=missing,
+                measurement_method=missing, unit=missing, datum="WGS84") =
+            $(name)(value, plus_error, minus_error, measurement_method, unit, datum)
 
-        attribute_fields(::Type{$name}) = (:plus_error, :minus_error, :unit, :datum)
+        attribute_fields(::Type{$name}) = (:plus_error, :minus_error, :measurement_method, :unit, :datum)
 
         function Base.setproperty!(coord::$name, field::Symbol, value)
             if field === :unit
@@ -397,6 +412,8 @@ for (name, range) in (
                     val.plus_error = parse(Float64, att.content)
                 elseif att.name == "minusError"
                     val.minus_error = parse(Float64, att.content)
+                elseif att.name == "measurementMethod"
+                    val.measurement_method = att.content
                 elseif att.name == "unit"
                     val.unit = att.content
                 elseif att.name == "datum"
@@ -444,10 +461,13 @@ $(DocStringExtensions.TYPEDFIELDS)
     plus_error::M{Float64} = missing
     "Absolute error in the negative direction (i.e., this value should be positive)."
     minus_error::M{Float64} = missing
-    FloatNoUnit(value, plus_error=missing, minus_error=missing) = new(value, plus_error, minus_error)
+    "Method used to make measurement"
+    measurement_method::M{String}
+    FloatNoUnit(value, plus_error=missing, minus_error=missing,
+        measurement_method=missing) = new(value, plus_error, minus_error, measurement_method)
 end
 
-attribute_fields(::Type{FloatNoUnit}) = (:plus_error, :minus_error)
+attribute_fields(::Type{FloatNoUnit}) = (:plus_error, :minus_error, :measurement_method)
 
 function parse_node(::Type{FloatNoUnit}, node::EzXML.Node, warn::Bool=false)
     val = FloatNoUnit(parse(Float64, node.content))
@@ -456,6 +476,8 @@ function parse_node(::Type{FloatNoUnit}, node::EzXML.Node, warn::Bool=false)
             val.plus_error = parse(Float64, att.content)
         elseif att.name == "minusError"
             val.minus_error = parse(Float64, att.content)
+        elseif att.name == "measurementMethod"
+            val.measurement_method = att.content
         else
             warn && @warn("Unexpected attribute\"$(att.name)\" for FloatNoUnit")
         end
@@ -480,12 +502,15 @@ $(DocStringExtensions.TYPEDFIELDS)
     plus_error::M{Float64} = missing
     "Absolute error in the negative direction (i.e., this value should be positive)."
     minus_error::M{Float64} = missing
+    "Method used to make measurement"
+    measurement_method::M{String}
     "Units of observation."
     unit::M{String} = missing
-    Float(value, plus_error=missing, minus_error=missing, unit=missing) = new(value, plus_error, minus_error, unit)
+    Float(value, plus_error=missing, minus_error=missing, measurement_method=missing,
+        unit=missing) = new(value, plus_error, minus_error, measurement_method, unit)
 end
 
-attribute_fields(::Type{Float}) = (:plus_error, :minus_error, :unit)
+attribute_fields(::Type{Float}) = (:plus_error, :minus_error, :measurement_method, :unit)
 
 function parse_node(::Type{Float}, node::EzXML.Node, warn::Bool=false)
     val = Float(parse(Float64, node.content))
@@ -494,6 +519,8 @@ function parse_node(::Type{Float}, node::EzXML.Node, warn::Bool=false)
             val.plus_error = parse(Float64, att.content)
         elseif att.name == "minusError"
             val.minus_error = parse(Float64, att.content)
+        elseif att.name == "measurement_method"
+            val.measurement_method = att.content
         elseif att.name == "unit"
             val.unit = att.content
         else
@@ -667,14 +694,17 @@ $(DocStringExtensions.TYPEDFIELDS)
     end_effective_time::M{DateTime} = missing
     author::Vector{Person} = Person[]
     id::M{Int} = missing
+    "A subject for this comment. Multiple comments with the same subject should
+     be considered related. "
+    subject::M{String} = missing
 end
 
-Comment(value) = Comment(value, missing, missing, Person[], missing)
+Comment(value) = Comment(value, missing, missing, Person[], missing, missing)
 
 Base.convert(::Type{Comment}, s::AbstractString) = Comment(s)
 
 element_fields(::Type{Comment}) = (:value, :begin_effective_time, :end_effective_time, :author)
-attribute_fields(::Type{Comment}) = (:id,)
+attribute_fields(::Type{Comment}) = (:id, :subject)
 
 """
     SampleRateRatio(number_samples, number_seconds)

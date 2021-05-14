@@ -115,54 +115,74 @@ end
     parse_node(::Type{T}, node::EzXML.Node, warn::Bool=false) where T -> ::T
 
 Parse the contents of `node` and return a type `T` containing the
-information 
+information held within it.
 """
-function parse_node(::Type{T}, node::EzXML.Node, warn::Bool=false) where T
-    @debug("Parsing $T from fallback method")
+@generated function parse_node(::Type{T}, node::EzXML.Node, warn::Bool=false) where T
+    _parse_node_code(T, node, warn)
+end
+
+function _parse_node_code(T, node, warn)
+    # Get a list of the fields once during compilation
     attributes = attribute_fields(T)
-    @debug("  $T has attributes $attributes")
-    args = Dict{Symbol,Any}()
-    # Attributes
-    for att in EzXML.eachattribute(node)
-        field = transform_name(att.name)
-        @debug("  Parsing attribute $field")
-        if field in attributes
-            fieldT = fieldtype(T, field)
-            @debug("    Parsing $field as a $fieldT")
-            args[field] = local_parse(fieldT, att.content)
-        else
-            warn && @warn("unexpected attribute \"$(att.name)\" (:$field) for $T")
-        end
-    end
-    # Elements
-    elements = element_fields(T)
-    @debug("  $T has elements $(collect(elements))")
-    for elm in EzXML.eachelement(node)
-        field = transform_name(elm.name)
-        @debug("  Parsing element $field")
-        if field in elements
-            fieldT = fieldtype(T, field)
-            @debug("    Parsing $field as a $fieldT")
-            if fieldT <: AbstractVector
-                # Create an empty vector of fieldTs the first time we hit this
-                if !haskey(args, field)
-                    args[field] = fieldT()
-                    @debug("    Creating new array type $fieldT")
+    elements = collect(element_fields(T))
+    fields = fieldnames(T)
+    field_types = fieldtype.(Ref(T), fields)
+    attribute_names = xml_attribute_name.(attributes)
+    attribute_types = fieldtype.(Ref(T), attributes)
+    element_names = xml_element_name.(elements)
+    element_types = fieldtype.(Ref(T), elements)
+    # Generate code to return
+    quote
+        @debug("Parsing $T from fallback generated method")
+        @debug("  $T has attributes $($attributes)")
+        @debug("  $T has elements $($elements)")
+
+        # Define function-local variables to pass in to constructor
+        $([typ <: AbstractArray ?
+            :($f = $(typ)()) :
+            typ isa Union ?
+                :(local $f = missing) :
+                :(local $f)
+            for (f, typ) in zip(fields, field_types)]...)
+
+        # Attributes (always scalars)
+        for att in EzXML.eachattribute(node)
+            $([:(
+                if att.name === $att_name
+                    $var_name = local_parse($ftype, att.content)
+                    @debug("    Got attribute $var_name = $($var_name)")
+                    continue
                 end
-                @debug("    Parsing vector element $(fieldT)")
-                push!(args[field], parse_node(eltype(fieldT), elm, warn))
-                @debug("    Vector of $(eltype(fieldT)) length: $(length(args[field]))")
-            else
-                args[field] = parse_node(fieldT, elm, warn)
-                @debug("$fieldT $elm $warn")
-                @debug("    Got value of $(args[field]) for $field")
-            end
-        else
-            warn && @warn("unexpected element \"$(elm.name)\" for $T")
+                ) for (att_name, var_name, ftype) in
+                    zip(attribute_names, attributes, attribute_types)]...)
         end
+
+        # Elements
+        for elm in EzXML.eachelement(node)
+            # Scalars
+            $([:(
+                if elm.name === $elm_name
+                    $var_name = parse_node($ftype, elm, warn)
+                    @debug("    Got element $var_name = $($var_name)")
+                    continue
+                end
+                ) for (elm_name, var_name, ftype) in
+                    zip(element_names, elements, element_types)
+                    if !(ftype <: AbstractArray)]...)
+            # Vectors
+            $([:(
+                if elm.name === $elm_name
+                    push!($var_name, parse_node($(eltype(ftype)), elm, warn))
+                    @debug("    Got element $var_name = $($var_name)")
+                    continue
+                end
+                ) for (elm_name, var_name, ftype) in
+                    zip(element_names, elements, element_types)
+                    if ftype <: AbstractArray]...)
+        end
+        # Pass variables to inner constructor
+        $(T)($([:($f) for f in fields]...))
     end
-    @debug("Args for $T: $args")
-    T(; args...)
 end
 
 # Version of parse which accepts String as the type.

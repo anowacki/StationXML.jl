@@ -116,6 +116,8 @@ function xml_attribute_name(s::Symbol)
         return "alternateCode"
     elseif s === :historical_code
         return "historicalCode"
+    elseif s === :subject
+        return "subject"
     else
         throw(ArgumentError("$s is not a known StationXML attribute name"))
     end

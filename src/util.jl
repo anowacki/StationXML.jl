@@ -1,6 +1,29 @@
 # Utility functions
 
 """
+    all_values(x)
+
+Return a tuple of all the values contained in an instance of a composite
+type `x`.
+
+# Example
+```
+julia> struct A
+       x
+       y
+       end
+
+julia> all_values(A(1, "2"))
+(1, "2")
+```
+"""
+@generated function all_values(x)
+    quote
+        ($([:(x.$f) for f in fieldnames(x)]...),)
+    end
+end
+
+"""
     transform_name(s::AbstractString) -> s′::Symbol
 
 Transform the name of an attribute or element of an FDSN Station XML

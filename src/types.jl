@@ -103,6 +103,12 @@ StationXML specification
 """
 attribute_fields(::Type{Channel}) = (BASE_NODE_ATTRIBUTES..., :location_code)
 
+"""
+    removed_fields(T::Type)
+
+Return the fields of type `T` which are no longer present in the latest StationXML
+version.
+"""
 removed_fields(::Type{Channel}) = (:storage_format,)
 
 """
@@ -285,8 +291,8 @@ end
 
 attribute_fields(::Type{FDSNStationXML}) = (:schema_version,)
 
-"Types which should be compared using Base.=="
-const COMPARABLE_TYPES = Union{Missing, Float64, String, DateTime}
+"Types which should be compared using Base.==="
+const COMPARABLE_TYPES = Union{Float64, String, DateTime}
 
 # Hacky way to define == for all the types we create
 for name in names(StationXML, all=true)
@@ -294,18 +300,18 @@ for name in names(StationXML, all=true)
     if occursin(r"^[A-Z]", name_str) && !occursin(r"^BASE", name_str)
         name in (:M, :COMPARABLE_TYPES, :StationXML, :Numerator, :Denominator) && continue
         getfield(StationXML, name) isa DataType || continue
-        @eval Base.:(==)(a::$name, b::$name) = a === b ? true : local_equals(a, b)
+        @eval Base.:(==)(a::$name, b::$name)::Bool = a === b || local_equals(a, b)
     end
 end
 
 """Local function to compare all types by each of their fields, apart from the types from
 Base we use."""
-function local_equals(a::COMPARABLE_TYPES, b::COMPARABLE_TYPES)
-    a === missing && b === missing && return true
-    a == b
-end
-function local_equals(a::T1, b::T2) where {T1,T2}
-    T1 == T2 ? all(local_equals(getfield(a, f), getfield(b, f)) for f in fieldnames(T1)) : false
-end
-local_equals(a::AbstractArray, b::AbstractArray) =
+local_equals(a::T, b::T) where {T<:COMPARABLE_TYPES} = a === b
+local_equals(::Missing, ::Missing) = true
+local_equals(::COMPARABLE_TYPES, ::Missing) = false
+local_equals(::Missing, ::COMPARABLE_TYPES) = false
+local_equals(a::T, b::T) where {T} =
+    all(local_equals(va, vb) for (va, vb) in zip(all_values(a), all_values(b)))
+local_equals(a::T1, b::T2) where {T1,T2} = false
+local_equals(a::AbstractArray, b::AbstractArray)::Bool =
     size(a) == size(b) && all(local_equals(aa, bb) for (aa, bb) in zip(a,b))

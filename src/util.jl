@@ -318,7 +318,7 @@ attribute_fields(::Type{<:EnumeratedStruct}) = ()
 element_fields(::Type{<:EnumeratedStruct}) = ()
 has_text_field(::Type{<:EnumeratedStruct}) = true
 text_field(::Type{<:EnumeratedStruct}) = :value
-Base.convert(::Type{S}, s::T) where {S<:AbstractString, T<:EnumeratedStruct} = S(s.value)
+Base.convert(::Type{S}, s::EnumeratedStruct) where {S<:AbstractString} = S(s.value)
 Base.convert(::Type{T}, s::AbstractString) where {T<:EnumeratedStruct} = T(s)
 parse_node(::Type{T}, node::EzXML.Node, warn::Bool=false) where {T<:EnumeratedStruct} = T(node.content)
 local_parse(::Type{T}, s::AbstractString) where {T<:EnumeratedStruct} = T(s)

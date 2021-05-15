@@ -117,12 +117,10 @@ end
 Parse the contents of `node` and return a type `T` containing the
 information held within it.
 """
-@generated function parse_node(::Type{T}, node::EzXML.Node, warn::Bool=false) where T
-    _parse_node_code(T, node, warn)
-end
+parse_node
 
-function _parse_node_code(T, node, warn)
-    # Get a list of the fields once during compilation
+@generated function parse_node(::Type{T}, node::EzXML.Node, warn::Bool=false) where T
+    # Lists of fields
     attributes = attribute_fields(T)
     elements = collect(element_fields(T))
     fields = fieldnames(T)
@@ -131,12 +129,8 @@ function _parse_node_code(T, node, warn)
     attribute_types = fieldtype.(Ref(T), attributes)
     element_names = xml_element_name.(elements)
     element_types = fieldtype.(Ref(T), elements)
-    # Generate code to return
-    quote
-        @debug("Parsing $T from fallback generated method")
-        @debug("  $T has attributes $($attributes)")
-        @debug("  $T has elements $($elements)")
 
+    quote
         # Define function-local variables to pass in to constructor
         $([typ <: AbstractArray ?
             :($f = $(typ)()) :
@@ -150,7 +144,6 @@ function _parse_node_code(T, node, warn)
             $([:(
                 if att.name === $att_name
                     $var_name = local_parse($ftype, att.content)
-                    @debug("    Got attribute $var_name = $($var_name)")
                     continue
                 end
                 ) for (att_name, var_name, ftype) in
@@ -163,7 +156,6 @@ function _parse_node_code(T, node, warn)
             $([:(
                 if elm.name === $elm_name
                     $var_name = parse_node($ftype, elm, warn)
-                    @debug("    Got element $var_name = $($var_name)")
                     continue
                 end
                 ) for (elm_name, var_name, ftype) in
@@ -173,13 +165,13 @@ function _parse_node_code(T, node, warn)
             $([:(
                 if elm.name === $elm_name
                     push!($var_name, parse_node($(eltype(ftype)), elm, warn))
-                    @debug("    Got element $var_name = $($var_name)")
                     continue
                 end
                 ) for (elm_name, var_name, ftype) in
                     zip(element_names, elements, element_types)
                     if ftype <: AbstractArray]...)
         end
+
         # Pass variables to inner constructor
         $(T)($([:($f) for f in fields]...))
     end

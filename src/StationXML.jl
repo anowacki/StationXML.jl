@@ -230,4 +230,6 @@ include("deprecations.jl")
 include("accessors.jl")
 include("io.jl")
 
+include("precompile.jl")
+
 end # module

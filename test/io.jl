@@ -264,5 +264,15 @@ include("test_util.jl")
             sxml′ = StationXML.read(io)
             @test sxml == sxml′
         end
+
+        @testset "Warn removed fields" begin
+            let sxml = gzipped_read("orfeus_NL_HGN.xml.gz")
+                deleteat!(sxml.network[1].station[1].channel, 2:length(sxml.network[1].station[1].channel))
+                @test_logs (:warn,
+                    "Not writing field storage_format: removed in StationXML v$(StationXML.DEFAULT_SCHEMA_VERSION)"
+                    ) write(devnull, sxml, warn=true)
+                @test_logs write(devnull, sxml)
+            end
+        end
     end
 end

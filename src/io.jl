@@ -209,19 +209,22 @@ julia> sxml = StationXML.read("example_stationxml_file.xml");
 julia> write("new_file.xml", sxml)
 ```
 """
-Base.write(io::IO, sxml::FDSNStationXML) = EzXML.prettyprint(io, xmldoc(sxml))
+Base.write(io::IO, sxml::FDSNStationXML; warn=false) = EzXML.prettyprint(io, xmldoc(sxml; warn=warn))
 
 
 """
-    xmldoc(sxml::FDSNStationXML) -> xml::EzXML.XMLDocument
+    xmldoc(sxml::FDSNStationXML; warn=false) -> xml::EzXML.XMLDocument
 
 Create an XML document from `sxml`, a set of events of type `EventParameters`.
 `xml` is an `EzXML.XMLDocument` suitable for output.
 
 The StationXML document `xml` may be written with `write(io, xml)`
 or converted to a string with `string(xml)`.
+
+If `warn` is `true`, then warn about the presence of fields which have been
+removed from the most recent StationXML specification, and hence will not be written.
 """
-function xmldoc(sxml::FDSNStationXML)
+function xmldoc(sxml::FDSNStationXML; warn=false)
     version = "1"
     doc = EzXML.XMLDocument("1.0")
     root = EzXML.ElementNode("FDSNStationXML")
@@ -229,22 +232,25 @@ function xmldoc(sxml::FDSNStationXML)
     namespace = EzXML.AttributeNode("xmlns", "http://www.fdsn.org/xml/station/" * version)
     EzXML.link!(root, namespace)
     EzXML.setroot!(doc, root)
-    add_attributes!(root, sxml)
-    add_elements!(root, :fdsn_station_xml, sxml)
+    add_attributes!(root, sxml, warn)
+    add_elements!(root, :fdsn_station_xml, sxml, warn)
     doc
 end
 
 """
-    add_attributes!(node, value) -> node
+    add_attributes!(node, value, warn) -> node
 
 Add the attribute fields from the structure `value` to a `node`.
-For QuakeML documents, all attributes should be `ResourceReference`s.
+
+If `warn` is `true`, then  warn about the presence of attributes which have
+been removed from the most recent StationXML specification, and hence will not be added.
 """
-function add_attributes!(node, value::T) where T
+function add_attributes!(node, value::T, warn) where T
     for field in attribute_fields(T)
         # Skip fields read from v1.0 but removed from v1.1
         if has_removed_fields(T) && field in removed_fields(T)
-            @warn("Not writing field $T: removed in StationXML v1.1")
+            warn && _warn_removed_field(field)
+            continue
         # Write out StationXML v1.1 regardless of what was read in
         elseif field === :schema_version
             add_attribute!(node, field, DEFAULT_SCHEMA_VERSION)
@@ -268,31 +274,33 @@ end
 add_attribute!(node, field, value::EnumeratedStruct) = add_attribute!(node, field, value.value)
 
 """
-    add_elements!(node, parent_field, value) -> node
+    add_elements!(node, parent_field, value, warn) -> node
 
 Add the elements to `node` contained within `value`.  `parent_field`
-is the name of the field which contains `value`.
+is the name of the field which contains `value`.  If `warn` is `true`, then
+warn about the presence of elements which have been removed from the
+most recent StationXML specification, and hence will not be added.
 """
-function add_elements!(node, parent_field, value::T) where T
+function add_elements!(node, parent_field, value::T, warn) where T
     for field in element_fields(T)
         @debug("adding $parent_field: $field")
         # Skip fields read from v1.0 but removed from v1.1
         if has_removed_fields(T) && field in removed_fields(T)
-            @warn("Not writing field $T: removed in StationXML v1.1")
+            warn && _warn_removed_field(field)
             continue
         end
         content = getfield(value, field)
         if content === missing
             continue
         end
-        add_element!(node, field, content)
+        add_element!(node, field, content, warn)
     end
     node
 end
 
-function add_elements!(node, parent_field, values::AbstractArray)
+function add_elements!(node, parent_field, values::AbstractArray, warn)
     for value in values
-        add_elements!(node, parent_field, value)
+        add_elements!(node, parent_field, value, warn)
     end
     node
 end
@@ -301,11 +309,13 @@ end
 const WritableTypes = Union{Float64, Int, String, DateTime, Bool}
 
 """
-    add_element!(node, field, value) -> node
+    add_element!(node, field, value, warn) -> node
 
 Add an element called `field` to `node` with content `value`.
+
+`warn` is passed on to [`add_attributes!`](@ref) and [`add_elements!`](@ref).
 """
-function add_element!(node, field, value::WritableTypes)
+function add_element!(node, field, value::WritableTypes, warn)
     @debug("  adding writable type name \"$field\" with value \"$value\"")
     name = xml_element_name(field)
     elem = EzXML.ElementNode(name)
@@ -314,27 +324,27 @@ function add_element!(node, field, value::WritableTypes)
     node
 end
 
-function add_element!(node, field, value::EnumeratedStruct)
+function add_element!(node, field, value::EnumeratedStruct, warn)
     @debug("  adding enumerated struct name \"$field\" with value \"$value\"")
-    add_element!(node, field, value.value)
+    add_element!(node, field, value.value, warn)
 end
 
-function add_element!(node, field, values::AbstractArray)
+function add_element!(node, field, values::AbstractArray, warn)
     @debug("  adding array type name \"$field\" with $(length(values)) values")
     for value in values
-        add_element!(node, field, value)
+        add_element!(node, field, value, warn)
     end
     node
 end
 
 # Fallback for structs
-function add_element!(node, field, value::T) where T
+function add_element!(node, field, value::T, warn) where T
     @debug("  adding compound type name \"$field\" of type \"$(typeof(value))\"")
     name = xml_element_name(field)
     elem = EzXML.ElementNode(name)
     EzXML.link!(node, elem)
-    add_attributes!(elem, value)
-    add_elements!(elem, field, value)
+    add_attributes!(elem, value, warn)
+    add_elements!(elem, field, value, warn)
     if has_text_field(T)
         value_field = text_field(T)
         add_text!(elem, getfield(value, value_field))
@@ -349,3 +359,10 @@ function add_text!(node, value::WritableTypes)
     EzXML.link!(node, content)
     node
 end
+
+"""
+Issue a warning about an attribute or element `field` which is no longer
+present in the most recent StationXML standard and hence will not be written.
+"""
+_warn_removed_field(field) =
+    @warn("Not writing field $field: removed in StationXML v$DEFAULT_SCHEMA_VERSION")

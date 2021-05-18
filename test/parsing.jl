@@ -38,6 +38,20 @@ import EzXML
                 node = EzXML.parsexml("<element>$dtstring</element>").root
                 @test_throws ArgumentError StationXML.parse_node(DateTime, node)
             end
+            # Dates in attributes
+            @test StationXML.readstring("""
+                <?xml version='1.0' encoding='UTF-8'?>
+                <FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" schemaVersion="1.1">
+                  <Source>SeisComP3</Source>
+                  <Sender>ODC</Sender>
+                  <Module/>
+                  <ModuleURI/>
+                  <Created>2020-04-28T21:17:08.868852Z</Created>
+                  <Network code="NL" startDate="1993-01-01T00:00:00.987654Z" restrictedStatus="open">
+                    <Description>Netherlands Seismic and Acoustic Network</Description>
+                  </Network>
+                </FDSNStationXML>
+                """).network[1].start_date == DateTime(1993, 1, 1, 0, 0, 0, 987)
         end
     end
 

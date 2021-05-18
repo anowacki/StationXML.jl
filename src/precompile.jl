@@ -32,7 +32,7 @@ end
 _union_types(x::Union) = (x.a, _union_types(x.b)...)
 _union_types(x::Type) = (x,)
 
-for T in [_union_types(ParsableTypes)...; DateTime]
+for T in _union_types(ParsableTypes)
     @eval begin
         precompile(parse_node, (Type{$T}, EzXML.Node, Bool))
         precompile(parse_node, (Type{Union{Missing,$T}}, EzXML.Node, Bool))

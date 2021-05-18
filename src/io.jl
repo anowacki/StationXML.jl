@@ -85,26 +85,11 @@ If `warn` is `true`, then warn about unexpected items in the StationXML.
 parse_node(root::EzXML.Node, warn::Bool=false) = parse_node(FDSNStationXML, root, warn)
 
 "Types which can be directly parsed from a Node"
-const ParsableTypes = Union{String, Float64, Int}
+const ParsableTypes = Union{String, Float64, Int, DateTime}
 
 function parse_node(::Type{T}, node::EzXML.Node, warn::Bool=false) where {T<:ParsableTypes}
     @debug("Parsing $T from \"$(node.content)\"")
     local_parse(T, node.content)
-end
-
-# Handle dates with greater than millisecond precision by truncating to nearest millisecond,
-# cope with UTC time zone information (ends with 'Z'), and convert non-UTC time zones to UTC
-function parse_node(T::Type{DateTime}, node::EzXML.Node, warn::Bool=false)
-    @debug("Parsing a DateTime from \"$(node.content)\"")
-    # Remove sub-millisecond intervals
-    m = match(r"(.*T..:..:..[\.]?)([0-9]{0,3})[0-9]*([-+Z].*)*", node.content)
-    m === nothing && throw(ArgumentError("invalid date-time string \"$(node.content)\""))
-    dt = DateTime(m.captures[1] * m.captures[2]) # Local date to ms
-    (m.captures[3] === nothing || m.captures[3] in ("", "Z", "+00:00", "-00:00")) && return dt # UTC
-    pm = m.captures[3][1] # Whether ahead or behind UTC
-    offset = Time(m.captures[3][2:end]) - Time("00:00")
-    dt = pm == '+' ? dt + offset : dt - offset
-    dt
 end
 
 """
@@ -192,6 +177,19 @@ local_parse(::Type{<:AbstractString}, s::AbstractString) = s
 local_parse(::Type{T}, s::AbstractString) where T = parse(T, s)
 local_parse(::Type{Union{Missing, T}}, s::AbstractString) where T = local_parse(T, s)
 
+# Handle dates with greater than millisecond precision by truncating to nearest millisecond,
+# cope with UTC time zone information (ends with 'Z'), and convert non-UTC time zones to UTC
+function local_parse(::Type{DateTime}, s::AbstractString)
+    # Remove sub-millisecond intervals
+    m = match(r"(.*T..:..:..[\.]?)([0-9]{0,3})[0-9]*([-+Z].*)*", s)
+    m === nothing && throw(ArgumentError("invalid date-time string \"$(s)\""))
+    dt = DateTime(m.captures[1] * m.captures[2]) # Local date to ms
+    (m.captures[3] === nothing || m.captures[3] in ("", "Z", "+00:00", "-00:00")) && return dt # UTC
+    pm = m.captures[3][1] # Whether ahead or behind UTC
+    offset = Time(m.captures[3][2:end]) - Time("00:00")
+    dt = pm == '+' ? dt + offset : dt - offset
+    dt
+end
 
 #
 # Writing

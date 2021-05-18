@@ -19,6 +19,11 @@ for name in names(StationXML, all=true)
             precompile($name, ())
             # Equality
             precompile(==, ($name, $name))
+            precompile(==, ($name, Missing))
+            precompile(==, (Missing, $name))
+            precompile(local_equals, ($name, $name))
+            precompile(local_equals, ($name, Missing))
+            precompile(local_equals, (Missing, $name))
         end
         # Others
         for func in (:attribute_fields, :element_fields, :has_text_field, :text_field,

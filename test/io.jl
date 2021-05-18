@@ -206,12 +206,12 @@ include("test_util.jl")
                 </FDSNStationXML>
                 """
             xml = EzXML.parsexml(str)
-            if version == "v1.0"
+            if version == "v1.0" || version == "v1.1"
                 @test StationXML.schema_version_is_okay(xml)
             else
                 @test (@test_logs (:warn,
                     "document is StationXML version $(VersionNumber(version)); " *
-                    "only v1.0 data will be read") StationXML.schema_version_is_okay(xml))
+                    "only v1.1 data will be read") StationXML.schema_version_is_okay(xml))
             end
         end
         # Version 2+
@@ -226,11 +226,11 @@ include("test_util.jl")
 
     @testset "Writing strings" begin
         let sxml = FDSNStationXML(source="StationXML.jl",
-                created=DateTime(3000), schema_version="1"), xml=xmldoc(sxml)
+                created=DateTime(3000), schema_version=StationXML.DEFAULT_SCHEMA_VERSION), xml=xmldoc(sxml)
             push!(sxml.network, StationXML.Network(code="AN"))
             @test string(xml) == """
                 <?xml version="1.0" encoding="UTF-8"?>
-                <FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" schemaVersion="1"><Source>StationXML.jl</Source><Created>3000-01-01T00:00:00</Created></FDSNStationXML>
+                <FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" schemaVersion="1.1"><Source>StationXML.jl</Source><Created>3000-01-01T00:00:00</Created></FDSNStationXML>
                 """
         end
     end
@@ -240,7 +240,7 @@ include("test_util.jl")
             "orfeus_NL_HGN.xml.gz")
         @testset "To file" begin
             let sxml = sxml = FDSNStationXML(source="AN",
-                    created=DateTime("2000-01-01"), schema_version="1.0")
+                    created=DateTime("2000-01-01"), schema_version=StationXML.DEFAULT_SCHEMA_VERSION)
                 push!(sxml.network, StationXML.Network(code="AN"))
                 push!(sxml.network[1].comment, StationXML.Comment("A comment"))
                 io = IOBuffer()

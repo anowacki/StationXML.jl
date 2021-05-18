@@ -6,7 +6,7 @@ stations recording regularly-sampled information such as ground velocity.
 
 Full specification can be found at:
 
-    https://www.fdsn.org/xml/station/fdsn-station-1.0.xsd
+    https://www.fdsn.org/xml/station/fdsn-station-1.1.xsd
 
 
 ## Reading FDSN StationXML data
@@ -220,6 +220,9 @@ export
   xmldoc
 
 const M{T} = Union{T,Missing}
+
+"The schema version used for writing files"
+const DEFAULT_SCHEMA_VERSION = "1.1"
 
 include("compat.jl")
 include("util.jl")

@@ -64,10 +64,10 @@ provided in the new version.
 """
 function schema_version_is_okay(xml::EzXML.Document)
     version = VersionNumber(xml.root["schemaVersion"])
-    if version == v"1.0.0"
+    if version <= v"1.1.0"
         return true
-    elseif v"1.1.0" <= version < v"2"
-        @warn("document is StationXML version $version; only v1.0 data will be read")
+    elseif v"1.2.0" < version < v"2"
+        @warn("document is StationXML version $version; only v1.1 data will be read")
         return true
     else
         return false
@@ -245,6 +245,9 @@ function add_attributes!(node, value::T) where T
         # Skip fields read from v1.0 but removed from v1.1
         if has_removed_fields(T) && field in removed_fields(T)
             @warn("Not writing field $T: removed in StationXML v1.1")
+        # Write out StationXML v1.1 regardless of what was read in
+        elseif field === :schema_version
+            add_attribute!(node, field, DEFAULT_SCHEMA_VERSION)
             continue
         end
         content = getfield(value, field)

@@ -17,7 +17,10 @@ Note that StationXML.jl reads `filename` first before then parsing the
 string read in.  Do not `read` StationXML files which are larger than your
 system's memory.
 """
-read(filename; warn=false) = readstring(String(Base.read(filename)), filename=filename, warn=warn)
+function read(filename; warn=false)
+    xml = EzXML.readxml(filename)
+    _check_and_parse_xml(xml, filename, warn)
+end
 
 """
     readstring(xml_string; filename=nothing, warn=false) -> ::FDSNStationXML
@@ -31,7 +34,11 @@ encountered in the StationXML which are not expected.
 """
 function readstring(xml_string; filename=nothing, warn=false)
     xml = EzXML.parsexml(xml_string)
-    file_string = filename === nothing ? "" : " in file $filename"
+    _check_and_parse_xml(xml, filename, warn)
+end
+
+function _check_and_parse_xml(xml, filename, warn)
+    file_string = (filename === nothing || filename isa IO) ? "" : " in file $filename"
     xml_is_station_xml(xml) ||
         throw(ArgumentError("\"$file_string\" does not appear to be a StationXML file"))
     schema_version_is_okay(xml) ||

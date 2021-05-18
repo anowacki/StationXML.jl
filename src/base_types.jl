@@ -141,7 +141,7 @@ for (name, unit, docstring, range) in (
                     measurement_method=missing, unit=missing)
                 $optional_constructor_value_check
                 if unit !== missing
-                    unit == $unit || throw(ArgumentError("units of $($name_string) must be `\"$($unit)\"`"))
+                    unit === $unit || throw(ArgumentError("units of $($name_string) must be `\"$($unit)\"`"))
                 end
                 new(value, plus_error, minus_error, measurement_method, unit)
             end
@@ -175,13 +175,13 @@ for (name, unit, docstring, range) in (
         function parse_node(::Type{$name}, node::EzXML.Node, warn::Bool=false)::$name
             val = $(name)(parse(Float64, node.content))
             for att in EzXML.eachattribute(node)
-                if att.name == "plusError"
+                if att.name === "plusError"
                     val.plus_error = parse(Float64, att.content)
-                elseif att.name == "minusError"
+                elseif att.name === "minusError"
                     val.minus_error = parse(Float64, att.content)
-                elseif att.name == "measurementMethod"
+                elseif att.name === "measurementMethod"
                     val.measurement_method = att.content
-                elseif att.name == "unit"
+                elseif att.name === "unit"
                     val.unit = att.content
                 else
                     warn && @warn("Unexpected attribute \"$(att.name)\" for $($name_string)")
@@ -238,13 +238,13 @@ for (name, unit, docstring) in (
         function parse_node(::Type{$name}, node::EzXML.Node, warn::Bool=false)::$name
             val = $(name)(parse(Float64, node.content))
             for att in EzXML.eachattribute(node)
-                if att.name == "plusError"
+                if att.name === "plusError"
                     val.plus_error = parse(Float64, att.content)
-                elseif att.name == "minusError"
+                elseif att.name === "minusError"
                     val.minus_error = parse(Float64, att.content)
-                elseif att.name == "measurementMethod"
+                elseif att.name === "measurementMethod"
                     val.measurement_method = att.content
-                elseif att.name == "unit"
+                elseif att.name === "unit"
                     val.unit = att.content
                 else
                     warn && @warn("Unexpected attribute \"$(att.name)\" for $($name_string)")
@@ -285,7 +285,7 @@ for (name, unit, docstring) in (
 
             function $(name)(value, unit=missing)
                 if unit !== missing
-                    unit == $unit || throw(ArgumentError($error_string))
+                    unit === $unit || throw(ArgumentError($error_string))
                 end
                 new(value, unit)
             end
@@ -314,7 +314,7 @@ for (name, unit, docstring) in (
         function parse_node(::Type{$name}, node::EzXML.Node, warn::Bool=false)::$name
             val = $(name)(parse(Float64, node.content))
             for att in EzXML.eachattribute(node)
-                if att.name == "unit"
+                if att.name === "unit"
                     val.unit = att.content
                 else
                     warn && @warn("Unexpected attribute \"$(att.name)\" for $($name_string)")
@@ -369,7 +369,7 @@ for (name, range) in (
                 $(range[1]) <= value <= $(range[2]) ||
                     throw(ArgumentError($value_error_string))
                 if unit !== missing
-                    unit == "DEGREES" || throw(ArgumentError($value_error_string))
+                    unit === "DEGREES" || throw(ArgumentError($value_error_string))
                 end
                 if datum !== missing
                     datum = xs_nmtoken_or_throw(datum)
@@ -408,15 +408,15 @@ for (name, range) in (
         function parse_node(::Type{$name}, node::EzXML.Node, warn::Bool=false)::$name
             val = $(name)(parse(Float64, node.content))
             for att in EzXML.eachattribute(node)
-                if att.name == "plusError"
+                if att.name === "plusError"
                     val.plus_error = parse(Float64, att.content)
-                elseif att.name == "minusError"
+                elseif att.name === "minusError"
                     val.minus_error = parse(Float64, att.content)
-                elseif att.name == "measurementMethod"
+                elseif att.name === "measurementMethod"
                     val.measurement_method = att.content
-                elseif att.name == "unit"
+                elseif att.name === "unit"
                     val.unit = att.content
-                elseif att.name == "datum"
+                elseif att.name === "datum"
                     val.datum = att.content
                 else
                     warn && @warn("Unexpected attribute \"$(att.name)\" for $($name_string)")
@@ -515,16 +515,16 @@ attribute_fields(::Type{Float}) = (:plus_error, :minus_error, :measurement_metho
 function parse_node(::Type{Float}, node::EzXML.Node, warn::Bool=false)
     val = Float(parse(Float64, node.content))
     for att in EzXML.eachattribute(node)
-        if att.name == "plusError"
+        if att.name === "plusError"
             val.plus_error = parse(Float64, att.content)
-        elseif att.name == "minusError"
+        elseif att.name === "minusError"
             val.minus_error = parse(Float64, att.content)
-        elseif att.name == "measurement_method"
+        elseif att.name === "measurement_method"
             val.measurement_method = att.content
-        elseif att.name == "unit"
+        elseif att.name === "unit"
             val.unit = att.content
         else
-            warn && @warn("Unexpected attribute\"$(att.name)\" for FloatNoUnit")
+            warn && @warn("Unexpected attribute\"$(att.name)\" for Float")
         end
     end
     val
@@ -560,7 +560,7 @@ has_text_field(::Type{Identifier}) = true
 function parse_node(::Type{Identifier}, node::EzXML.Node, warn::Bool=false)
     val = Identifier(node.content)
     for att in EzXML.eachattribute(node)
-        if att.name == "type"
+        if att.name === "type"
             val.type = att.content
         else
             warn && @warn("Unexpected attribute \"$(att.name)\" for Identifier")

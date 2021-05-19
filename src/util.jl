@@ -151,6 +151,8 @@ function xml_attribute_name(s::Symbol)
         return "maximumTimeTear"
     elseif s === :number_segments
         return "numberSegments"
+    elseif s === :type
+        return "type"
     else
         throw(ArgumentError("$s is not a known StationXML attribute name"))
     end

@@ -22,6 +22,7 @@ using EzXML: ElementNode
             @test f("measurementMethod") == :measurement_method
             @test f("end") == :end_
             @test f("maximumTimeTear") == :maximum_time_tear
+            @test f("type") == :type
         end
         let f = StationXML.xml_element_name
             @test f(:module_name) == "Module"
@@ -45,6 +46,7 @@ using EzXML: ElementNode
             @test f(:start) == "start"
             @test f(:end_) == "end"
             @test f(:maximum_time_tear) == "maximumTimeTear"
+            @test f(:type) == "type"
             @test_throws ArgumentError f(:made_up_attribute)
         end
         # Round-trip all names in the spec

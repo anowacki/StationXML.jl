@@ -776,6 +776,50 @@ Units(name) = Units(name, missing)
 Base.convert(::Type{Units}, s::AbstractString) = Units(s)
 Base.convert(::Type{S}, units::Units) where {S<:AbstractString} = S(units.name)
 
+"""
+    DataAvailabilityExtent
+
+A type for describing data availability extents, the earliest and latest data
+available. No information is included about the continuity of the data is
+included or implied.
+
+# List of fields
+$(DocStringExtensions.TYPEDFIELDS)
+"""
+@with_kw struct DataAvailabilityExtent
+    start::DateTime
+    end_::DateTime
+end
+
+attribute_fields(::Type{DataAvailabilityExtent}) = (:start, :end_)
+
+"""
+    DataAvailabilitySpan
+
+A type for describing data availability spans, with variable continuity.
+The time range described may be based on the request parameters that generated
+the document and not necessarily relate to continuity outside of the range. It
+may also be a smaller time window than the request depending on the data
+characteristics.
+
+# List of fields
+$(DocStringExtensions.TYPEDFIELDS)
+"""
+@with_kw struct DataAvailabilitySpan
+    start::DateTime
+    end_::DateTime
+    "The number of continuous time series segments contained in the
+     specified time range. A value of 1 indicates that the time series is
+     continuous from start to end."
+    number_segments::Int
+    "The maximum time tear (gap or overlap) in seconds between time series
+     segments in the specified range."
+    maximum_time_tear::Float64
+end
+
+attribute_fields(::Type{DataAvailabilitySpan}) =
+    (:start, :end_, :number_segments, :maximum_time_tear)
+
 # """The BaseFilterType is derived by all filters"""
 @pour BaseFilter begin
     # @pour creates a macro, @BaseFilter, with which to insert the contents later

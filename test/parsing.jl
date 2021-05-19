@@ -79,6 +79,12 @@ import EzXML
                     endDate="2014-12-12T23:59:59" restrictedStatus="open"
                     sourceID="https://example.com"
                     iris:alternateNetworkCodes=".UNRESTRICTED">
+                   <DataAvailability>
+                    <Extent start="2000-01-01T00:00:00.000999Z" end="3000-01-01T00:00:00">
+                    </Extent>
+                    <Span start="1990-01-01T00:00:00" end="1991-01-01T00:00:00" numberSegments="2"
+                     maximumTimeTear="0.1"/>
+                   </DataAvailability>
                    <Identifier>ID</Identifier>
                    <Latitude>32.748402</Latitude>
                    <Longitude>-100.535698</Longitude>
@@ -119,6 +125,14 @@ import EzXML
                 @test sxml.network[1].source_id == "mailto:net@example.com"
                 @test sxml.network[1].station[1].source_id == "https://example.com"
                 @test sxml.network[1].station[1].channel[1].source_id === missing
+            end
+            @testset "Add DataAvailability" begin
+                @test sxml.network[1].station[1].data_availability.extent.start == DateTime(2000)
+                @test sxml.network[1].station[1].data_availability.extent.end_ == DateTime(3000)
+                @test sxml.network[1].station[1].data_availability.span[1].start == DateTime(1990)
+                @test sxml.network[1].station[1].data_availability.span[1].end_ == DateTime(1991)
+                @test sxml.network[1].station[1].data_availability.span[1].number_segments == 2
+                @test sxml.network[1].station[1].data_availability.span[1].maximum_time_tear == 0.1
             end
         end
     end

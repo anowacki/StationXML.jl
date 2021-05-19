@@ -32,6 +32,8 @@ $(DocStringExtensions.TYPEDFIELDS)
     "Persistent identifier for this `Channel`"
     identifier::Vector{Identifier} = Identifier[]
     comment::Vector{Comment} = Comment[]
+    "A description of time series data availablility for this `Channel`"
+    data_availability::M{DataAvailability} = missing
     "Channel's code (e.g., `\"BHE\"`)."
     code::String
     "Start date of operation of this channel of the containing station."
@@ -127,6 +129,8 @@ $(DocStringExtensions.TYPEDFIELDS)
     "Persistent identifier for this `Station`"
     identifier::Vector{Identifier} = Identifier[]
     comment::Vector{Comment} = Comment[]
+    "A description of time series data availablility for this `Station`"
+    data_availability::M{DataAvailability} = missing
     "Station's code, e.g. `\"ANMO\"`."
     code::String
     "Start date of operation of the station."
@@ -207,6 +211,8 @@ $(DocStringExtensions.TYPEDFIELDS)
     "Persistent identifier for this `Network`"
     identifier::Vector{Identifier} = Identifier[]
     comment::Vector{Comment} = Comment[]
+    "A description of time series data availablility for this `Network`"
+    data_availability::M{DataAvailability} = missing
     "Network's code (e.g., `\"IU\"`)."
     code::String
     start_date::M{DateTime} = missing
@@ -236,7 +242,8 @@ $(DocStringExtensions.TYPEDFIELDS)
      in this query."
     station::Vector{Station} = Station[]
 
-    function Network(description, identifier, comment, code, start_date, end_date,
+    function Network(description, identifier, comment, data_availability, code,
+            start_date, end_date,
             source_id, restricted_status, alternate_code, historical_code, operator,
             total_number_stations, selected_number_stations, station)
         if total_number_stations !== missing
@@ -247,7 +254,7 @@ $(DocStringExtensions.TYPEDFIELDS)
             selected_number_stations >= 0 ||
                 throw(ArgumentError("selected_number_stations must be 0 or more"))
         end
-        new(description, identifier, comment, code, start_date, end_date,
+        new(description, identifier, comment, data_availability, code, start_date, end_date,
             source_id, restricted_status, alternate_code, historical_code, operator,
             total_number_stations, selected_number_stations, station)
     end

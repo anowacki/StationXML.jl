@@ -459,3 +459,21 @@ $(DocStringExtensions.TYPEDFIELDS)
     contact::Vector{Person} = Person[]
     web_site::M{String} = missing
 end
+
+"""
+    DataAvailability
+
+A description of time series data availability. This information should be
+considered transient and is primarily useful as a guide for generating time
+series data requests. The information for a DataAvailability:Span may be
+specific to the time range used in a request that resulted in the document
+or limited to the availability of data withing the request range. These details
+may or may not be retained when synchronizing metadata between data centers. 
+
+# List of fields
+$(DocStringExtensions.TYPEDFIELDS)
+"""
+@with_kw struct DataAvailability
+    extent::M{DataAvailabilityExtent} = missing
+    span::Vector{DataAvailabilitySpan} = DataAvailabilitySpan[]
+end

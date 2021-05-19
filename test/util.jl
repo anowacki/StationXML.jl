@@ -20,6 +20,8 @@ using EzXML: ElementNode
             @test f("URI") == :uri
             @test f("sourceID") == :source_id
             @test f("measurementMethod") == :measurement_method
+            @test f("end") == :end_
+            @test f("maximumTimeTear") == :maximum_time_tear
         end
         let f = StationXML.xml_element_name
             @test f(:module_name) == "Module"
@@ -40,28 +42,33 @@ using EzXML: ElementNode
             @test f(:number) == "number"
             @test f(:source_id) == "sourceID"
             @test f(:measurement_method) == "measurementMethod"
+            @test f(:start) == "start"
+            @test f(:end_) == "end"
+            @test f(:maximum_time_tear) == "maximumTimeTear"
             @test_throws ArgumentError f(:made_up_attribute)
         end
         # Round-trip all names in the spec
-        let file = joinpath(@__DIR__, "data", "fdsn-station-1.0.xsd.xml"),
-                xml = EzXML.root(EzXML.readxml(file))
-            # Elements
-            for node in EzXML.findall("//xs:element", xml,
-                    ["xs"=>"http://www.w3.org/2001/XMLSchema",
-                    "fsx"=>"http://www.fdsn.org/xml/station/1"])
-                for att in EzXML.eachattribute(node)
-                    if att.name == "name" && att.content != "FDSNStationXML"
-                        @test StationXML.xml_element_name(StationXML.transform_name(att.content)) == att.content
+        @testset "Specification v$(version)" for version in ("1.0", "1.1")
+            let file = joinpath(@__DIR__, "data", "fdsn-station-$(version).xsd.xml"),
+                    xml = EzXML.root(EzXML.readxml(file))
+                # Elements
+                for node in EzXML.findall("//xs:element", xml,
+                        ["xs"=>"http://www.w3.org/2001/XMLSchema",
+                        "fsx"=>"http://www.fdsn.org/xml/station/1"])
+                    for att in EzXML.eachattribute(node)
+                        if att.name == "name" && att.content != "FDSNStationXML"
+                            @test StationXML.xml_element_name(StationXML.transform_name(att.content)) == att.content
+                        end
                     end
                 end
-            end
-            # Attributes
-            for node in EzXML.findall("//xs:attribute", xml,
-                    ["xs"=>"http://www.w3.org/2001/XMLSchema",
-                    "fsx"=>"http://www.fdsn.org/xml/station/1"])
-                for att in EzXML.eachattribute(node)
-                    if att.name == "name"
-                        @test StationXML.xml_attribute_name(StationXML.transform_name(att.content)) == att.content
+                # Attributes
+                for node in EzXML.findall("//xs:attribute", xml,
+                        ["xs"=>"http://www.w3.org/2001/XMLSchema",
+                        "fsx"=>"http://www.fdsn.org/xml/station/1"])
+                    for att in EzXML.eachattribute(node)
+                        if att.name == "name"
+                            @test StationXML.xml_attribute_name(StationXML.transform_name(att.content)) == att.content
+                        end
                     end
                 end
             end

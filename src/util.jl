@@ -42,6 +42,8 @@ function transform_name(s)
     # Special cases
     if s == "FrequencyDBVariation"
         return :frequency_db_variation
+    elseif s == "end"
+        return :end_
     end
     s = string(s)
     # CamelCase to Camel_Case
@@ -141,6 +143,14 @@ function xml_attribute_name(s::Symbol)
         return "historicalCode"
     elseif s === :subject
         return "subject"
+    elseif s === :start
+        return "start"
+    elseif s === :end_
+        return "end"
+    elseif s === :maximum_time_tear
+        return "maximumTimeTear"
+    elseif s === :number_segments
+        return "numberSegments"
     else
         throw(ArgumentError("$s is not a known StationXML attribute name"))
     end

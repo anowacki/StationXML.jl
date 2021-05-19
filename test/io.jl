@@ -238,6 +238,7 @@ include("test_util.jl")
     @testset "Writing" begin
         filenames = ("irisws_AK.xml.gz", "irisws_IU_BHx.xml.gz", "JSA.xml.gz",
             "orfeus_NL_HGN.xml.gz")
+
         @testset "To file" begin
             let sxml = sxml = FDSNStationXML(source="AN",
                     created=DateTime("2000-01-01"), schema_version=StationXML.DEFAULT_SCHEMA_VERSION)
@@ -256,8 +257,13 @@ include("test_util.jl")
                 end
             end
         end
+
         @testset "Round trip file $file" for file in filenames
             sxml = gzipped_read(file)
+            # Skip test files which are not expected to be written losslessly
+            if VersionNumber(sxml.schema_version) < VersionNumber(StationXML.DEFAULT_SCHEMA_VERSION)
+                continue
+            end
             io = IOBuffer()
             write(io, sxml)
             seekstart(io)

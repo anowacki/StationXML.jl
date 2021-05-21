@@ -98,8 +98,9 @@ using StationXML
             # Stage number >= 1
             @test_throws ArgumentError StationXML.ResponseStage(poles_zeros=pz, number=-1)
             # No stage gain with polynomial
-            @test_throws ArgumentError StationXML.ResponseStage(polynomial=poly, number=1,
-                stage_gain=StationXML.Gain(1, 1))
+            @test_logs (:warn, "stage_gain cannot be specified for polynomial stages in StationXML v1.1"
+                ) StationXML.ResponseStage(polynomial=poly, number=1,
+                    stage_gain=StationXML.Gain(1, 1))
         end
     end
 end

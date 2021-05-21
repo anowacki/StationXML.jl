@@ -408,7 +408,7 @@ $(DocStringExtensions.TYPEDFIELDS)
             throw(ArgumentError("none or only one response type can be specified"))
         number >= 0 || throw(ArgumentError("number must be 0 or more"))
         polynomial !== missing && stage_gain !== missing &&
-            throw(ArgumentError("stage_gain cannot be specified for polynomial stages"))
+            @warn("stage_gain cannot be specified for polynomial stages in StationXML v1.1")
         new(poles_zeros, coefficients, response_list, fir, polynomial,
             decimation, stage_gain, number, resource_id)
     end

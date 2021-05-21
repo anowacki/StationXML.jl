@@ -266,8 +266,8 @@ attribute_fields(::Type{Network}) = (BASE_NODE_ATTRIBUTES...,)
     FDSNStationXML
 
 Top-level type for Station XML. Required field are `source` (network ID
-of the institution sending the message) and one or more `Network`s or one or
-more `Station`s.
+of the institution sending the message), `created` (creation time of the document)
+and one or more `Network`s containers.
 
 This corresponds to the schema's RootType.
 

@@ -119,8 +119,8 @@ attribute_fields(::Type{Equipment}) = (:resource_id,)
 Container for log entries.
 
 !!! note
-    The `Log` type appears to be unused in StationXML v1.2 and older.
-    It is included here for completeness
+    The `Log` type is no longer present in StationXML v1.1 and later.
+    It is included here for compatibility with v1.0 files.
 
 # List of fields
 $(DocStringExtensions.TYPEDFIELDS)
@@ -371,29 +371,34 @@ end
 Represents a channel's response and covers SEED blockettes 53 to 56.
 
 !!! note
-    Although the `stage_gain` field is mandatory in the StationXML specification,
+    Although the `stage_gain` field is mandatory in v1.0 of the StationXML specification,
     it is common in StationXML files that the field is absent for certain
     types of channel, such as state-of-health channels.  Hence it is an
     optional field of `ResponseStage` in StationXML.jl.
+    Version 1.1 of the specification removed the requirement for a `stage_gain`
+    when a `polynomial` stage is defined, rather than one of `poles_zeros`,
+    `coefficients`, `response_list` or `fir`.
 
 # List of fields
 $(DocStringExtensions.TYPEDFIELDS)
 """
 @with_kw struct ResponseStage
-    "A choice of response types. There should be one response per stage."
+    "A choice of `polynomial` versus all other response types.
+     There should be one response per stage."
     poles_zeros::M{PolesZeros} = missing
     coefficients::M{Coefficients} = missing
     response_list::M{ResponseList} = missing
     fir::M{FIR} = missing
     polynomial::M{Polynomial} = missing
     decimation::M{Decimation} = missing
-    "StageSensitivity is the gain at the stage of the encapsulating
+    "The gain at the stage of the encapsulating
      response element and corresponds to SEED blockette 58. In the SEED
      convention, stage 0 gain represents the overall sensitivity of the channel.
      In this schema, stage 0 gains are allowed but are considered deprecated.
      Overall sensitivity should be specified in the InstrumentSensitivity
      element."
     stage_gain::M{Gain} = missing
+    "Stage sequence number. This is used in all the response SEED blockettes."
     number::Int
     "Same meaning as the `resource_id` field of [`Equipment`](@ref StationXML.Equipment)."
     resource_id::M{String} = missing
@@ -402,6 +407,8 @@ $(DocStringExtensions.TYPEDFIELDS)
         count(!ismissing, (poles_zeros, coefficients, response_list, fir, polynomial)) <= 1 ||
             throw(ArgumentError("none or only one response type can be specified"))
         number >= 0 || throw(ArgumentError("number must be 0 or more"))
+        polynomial !== missing && stage_gain !== missing &&
+            throw(ArgumentError("stage_gain cannot be specified for polynomial stages"))
         new(poles_zeros, coefficients, response_list, fir, polynomial,
             decimation, stage_gain, number, resource_id)
     end

@@ -7,7 +7,7 @@ files describing seismic stations.
 [![Build status](https://ci.appveyor.com/api/projects/status/qjedw1iel0d4vhh4?svg=true)](https://ci.appveyor.com/project/AndyNowacki/stationxml-jl)
 [![Coverage Status](https://coveralls.io/repos/github/anowacki/StationXML.jl/badge.svg?branch=master)](https://coveralls.io/github/anowacki/StationXML.jl?branch=master)
 
-The package follows the [FDSN schema](https://www.fdsn.org/xml/station/fdsn-station-1.0.xsd).
+The package follows the [FDSN schema](https://www.fdsn.org/xml/station/fdsn-station-1.1.xsd).
 
 ## Installation
 
@@ -60,6 +60,13 @@ Simply call `write` on an `FDSNStationXML` object to write it to disk or other
 ```julia
 julia> write("output_file.xml", sxml)
 ```
+
+StationXML.jl **always** writes files according to the v1.1 schema.
+
+Note that v1.1 removed a small number of fields from the specification.  Therefore, if
+you are writing an `FDSNStationXML` object read from a v1.0 file, there is the potential
+that information may be lost.  If you are worried, pass the `warn=true` keyword argument
+to `write` to enable warnings for the presence of any fields which will not be written.
 
 ### Accessing fields
 

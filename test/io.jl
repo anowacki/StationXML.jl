@@ -197,7 +197,7 @@ include("test_util.jl")
 
     @testset "Schema version" begin
         # Version 1
-        for version in ("v1.0", "v1.1", "v1.99")
+        for version in ("v1.0", "v1.1", "v1.1.2", "v1.2", "v1.99")
             str = """
                 <FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" schemaVersion="$version">
                   <Source>StationXML.jl</Source>
@@ -206,7 +206,7 @@ include("test_util.jl")
                 </FDSNStationXML>
                 """
             xml = EzXML.parsexml(str)
-            if version == "v1.0" || version == "v1.1"
+            if version in ("v1.0", "v1.1", "v1.1.2")
                 @test StationXML.schema_version_is_okay(xml)
             else
                 @test (@test_logs (:warn,

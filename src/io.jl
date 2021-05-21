@@ -64,9 +64,9 @@ provided in the new version.
 """
 function schema_version_is_okay(xml::EzXML.Document)
     version = VersionNumber(xml.root["schemaVersion"])
-    if version <= v"1.1.0"
+    if version < v"1.2"
         return true
-    elseif v"1.2.0" < version < v"2"
+    elseif v"1.2.0" <= version < v"2"
         @warn("document is StationXML version $version; only v1.1 data will be read")
         return true
     else

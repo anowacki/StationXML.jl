@@ -3,9 +3,8 @@
 Read and write [FDSN StationXML-format](https://www.fdsn.org/xml/station)
 files describing seismic stations.
 
-[![Build Status](https://travis-ci.org/anowacki/StationXML.jl.svg?branch=master)](https://travis-ci.org/anowacki/StationXML.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/qjedw1iel0d4vhh4?svg=true)](https://ci.appveyor.com/project/AndyNowacki/stationxml-jl)
-[![Coverage Status](https://coveralls.io/repos/github/anowacki/StationXML.jl/badge.svg?branch=master)](https://coveralls.io/github/anowacki/StationXML.jl?branch=master)
+[![Build Status](https://github.com/anowacki/StationXML.jl/workflows/CI/badge.svg)](https://github.com/anowacki/StationXML.jl/actions)
+[![codecov](https://codecov.io/gh/anowacki/StationXML.jl/branch/master/graph/badge.svg?token=M8H386OZCH)](https://codecov.io/gh/anowacki/StationXML.jl)
 
 The package follows the [FDSN schema](https://www.fdsn.org/xml/station/fdsn-station-1.1.xsd).
 
@@ -224,6 +223,21 @@ julia> channels(sxml).longitude
  StationXML.Longitude(-6.110599, missing, missing, missing, "WGS84")
  ⋮
 ```
+
+
+### Merging multiple sets of metadata
+#### `merge[!]`
+You can merge together mulitiple `FDSNStationXML` objects with `merge` (returining
+a copy and not modifying the originals), or `merge!`, which updates the first
+object given.  In situations where it is obvious that two networks, stations
+or channels are the same, these will not be duplicated in the final merged
+object.  Cases which are ambiguous are not merged and the user is warned by
+default.
+
+#### `append!`
+As an alternative to `merge!`, one can simply `append!` two objects together.
+This simply has the effect of copying everything in one `FDSNStationXML`
+object into another, and duplication is not avoided.
 
 
 ### Structure of objects

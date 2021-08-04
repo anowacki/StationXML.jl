@@ -178,8 +178,8 @@ using Dates: Date, DateTime
                 @test_logs (:warn, """
                     two channels with code 'A.A..A' overlap in time but are not the same; only keeping the first
                     Time ranges:
-                        (DateTime("3000-01-01T00:00:00"), DateTime("3000-01-03T00:00:00"))
-                        (DateTime("3000-01-02T00:00:00"), DateTime("3000-01-04T00:00:00"))
+                        3000-01-01T00:00:00 - 3000-01-03T00:00:00
+                        3000-01-02T00:00:00 - 3000-01-04T00:00:00
                     """
                     ) merge(sxml1, sxml2)
                 @test_logs merge(sxml1, sxml2, warn=false)
@@ -209,8 +209,8 @@ using Dates: Date, DateTime
                     cha_kwargs=(start_date=DateTime(3000), end_date=DateTime(3000, 2)))
                 sxml2 = dummy_sxml(loc="10",
                     cha_kwargs=(start_date=DateTime(3000, 1, 2), end_date=DateTime(3000, 2, 2)))
-                c1 = only(channels(sxml1))
-                c2 = only(channels(sxml2))
+                c1 = first(channels(sxml1))
+                c2 = first(channels(sxml2))
                 @test merge(sxml1, sxml2).network[1].station[1].channel == [c1, c2]
                 push!(sxml2.network[1].station[1].channel, c1)
                 @test merge(sxml1, sxml2).network[1].station[1].channel == [c1, c2]

@@ -39,6 +39,9 @@ jobs:
           - {os: 'macos-latest', version: '1.2'}
           - {os: 'macos-latest', version: '1.5'}
           - {os: 'macos-latest', version: 'latest'}
+          # Don't bother with x86 on nightly
+          - {os: 'ubuntu-latest', version: 'nightly', arch: 'x86'}
+          - {os: 'windows-latest', version: 'nightly', arch: 'x86'}
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1

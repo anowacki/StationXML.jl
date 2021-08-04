@@ -201,8 +201,8 @@ function _merge!(network::Network, sta1::Station, sta2::Station, warn)
                 if _time_ranges_overlap(c1, c2)
                     if warn
                         chan_code = join((network.code, sta1.code, loc, code), '.')
-                        timerange1 = (c1.start_date, c1.end_date)
-                        timerange2 = (c2.start_date, c2.end_date)
+                        timerange1 = string(c1.start_date, " - ", c1.end_date)
+                        timerange2 = string(c2.start_date, " - ", c2.end_date)
                         @warn("""
                             two channels with code '$(chan_code)' overlap in time but are not the same; only keeping the first
                             Time ranges:

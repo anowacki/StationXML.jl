@@ -1,7 +1,5 @@
 using StationXML, Test
 
-include("test_util.jl")
-
 let sxml = gzipped_read("JSA.xml.gz")
     @testset "Accessors" begin
         @testset "Functions" begin

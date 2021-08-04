@@ -2,8 +2,6 @@ using StationXML, Test
 using Dates: DateTime
 import EzXML
 
-include("test_util.jl")
-
 @testset "I/O" begin
     @testset "Read(string)" begin
         let file = datapath("JSA.xml"), str = String(read(file))

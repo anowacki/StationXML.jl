@@ -50,3 +50,20 @@ end
 
 precompile(StationXML.read, (String,))
 precompile(readstring, (String,))
+
+
+#=
+    Merging and appending
+=#
+for T in (Network, Station, Channel)
+    precompile(_time_ranges_overlap, (T, T))
+end
+precompile(_merge!, (Nothing, FDSNStationXML, FDSNStationXML, Bool))
+precompile(_merge!, (FDSNStationXML, Network, Network, Bool))
+precompile(_merge!, (Network, Station, Station, Bool))
+precompile(Base.append!, (Network, Network))
+precompile(Base.append!, (FDSNStationXML, FDSNStationXML))
+precompile(Base.merge, (FDSNStationXML, FDSNStationXML))
+precompile(Base.merge, (FDSNStationXML, FDSNStationXML, FDSNStationXML))
+precompile(Base.merge!, (FDSNStationXML, FDSNStationXML))
+precompile(Base.merge!, (FDSNStationXML, FDSNStationXML, FDSNStationXML))

@@ -232,6 +232,7 @@ include("types.jl")
 include("deprecations.jl")
 include("accessors.jl")
 include("io.jl")
+include("merge.jl")
 
 include("precompile.jl")
 

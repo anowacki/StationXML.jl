@@ -12,4 +12,5 @@ using Test
     include("util.jl")
     include("parsing.jl")
     include("io.jl")
+    include("merge.jl")
 end

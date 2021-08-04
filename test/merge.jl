@@ -59,11 +59,11 @@ using Dates: Date, DateTime
             s1 = gzipped_read("JSA.xml.gz")
             s2 = gzipped_read("orfeus_NL_HGN.xml.gz")
             s = merge(s1, s2)
-            for f in filter(x -> x !== :network, fieldnames(typeof(s)))
-                # === accounts for missing fields; all are immutables
-                @test getfield(s, f) === getfield(s1, f)
-                should_equal = getfield(s1, f) === getfield(s2, f)
-                @test (getfield(s, f) === getfield(s2, f)) == should_equal
+            for f in filter(x -> x !== :network, collect(fieldnames(typeof(s))))
+                # isequal accounts for missing fields; all are immutables
+                @test isequal(getfield(s, f), getfield(s1, f))
+                should_equal = isequal(getfield(s1, f), getfield(s2, f))
+                @test isequal(getfield(s, f), getfield(s2, f)) == should_equal
             end
         end
 

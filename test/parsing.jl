@@ -55,6 +55,47 @@ import EzXML
         end
     end
 
+    @testset "Required fields" begin
+        @testset "Missing source" begin
+            @test_throws UndefVarError StationXML.readstring("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" schemaVersion="1.1">
+                  <Created>2000-01-01T12:34:00.123456789-12:34</Created>
+                </FDSNStationXML>
+                """)
+        end
+        @testset "Missing network code" begin
+            @test_throws UndefVarError StationXML.readstring("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" schemaVersion="1.1">
+                  <Created>2000-01-01T12:34:00.123456789-12:34</Created>
+                  <Source>Test</Source>
+                  <Network>
+                  </Network>
+                </FDSNStationXML>
+                """)
+        end
+        @testset "Missing station latitude" begin
+            @test_throws UndefVarError StationXML.readstring("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" schemaVersion="1.1">
+                  <Created>2000-01-01T12:34:00.123456789-12:34</Created>
+                  <Source>Test</Source>
+                  <Network code="XX">
+                    <Station code="YYY">
+                      <Longitude>0</Longitude>
+                      <Elevation>0</Elevation>
+                      <Site>
+                        <Name>Example site</Name>
+                      </Site>
+                    </Station>
+                  </Network>
+                </FDSNStationXML>
+                """)
+        end
+    end
+
+
     # Changes from v1.0 to v1.1
     @testset "Version 1.1" begin
         let sxml = StationXML.readstring("""

@@ -15,6 +15,7 @@ jobs:
     # Allow failure on nightly
     continue-on-error: ${{ matrix.version == 'nightly' }}
     strategy:
+      fail-fast: false
       matrix:
         version:
           - '1.2'
@@ -34,8 +35,10 @@ jobs:
           # Reduce number of runs on older versions
           - {os: 'windows-latest', version: '1.2'}
           - {os: 'windows-latest', version: '1.5'}
+          - {os: 'windows-latest', version: 'latest'}
           - {os: 'macos-latest', version: '1.2'}
           - {os: 'macos-latest', version: '1.5'}
+          - {os: 'macos-latest', version: 'latest'}
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1

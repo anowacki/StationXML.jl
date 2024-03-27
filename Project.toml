@@ -1,7 +1,7 @@
 name = "StationXML"
 uuid = "bc702e9c-26b7-573b-a57f-23300c0e5013"
 authors = ["Andy Nowacki <a.nowacki@leeds.ac.uk>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"

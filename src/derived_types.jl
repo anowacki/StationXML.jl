@@ -63,8 +63,11 @@ $(DocStringExtensions.TYPEDFIELDS)
     frequency::M{Float64} = missing
     "The units of the data as input from the perspective
 	 of data acquisition. After correcting data for this response, these
-	 would be the resulting units."
-    input_units::Units
+	 would be the resulting units.  (Mandatory in the StationXML specification,
+     but optional here since some older channels did not specify input units,
+     for example when a channel records state-of-health information or
+     other metadata.)"
+    input_units::M{Units} = missing
     "The units of the data as output from the perspective
 	 of data acquisition. These would be the units of the data prior to
 	 correcting for this response."

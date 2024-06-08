@@ -190,6 +190,11 @@ import EzXML
                           -0.0158729, -0.00144455, 0.0107821, -0.0131202, 0.0104801,
                           -0.00623193, 0.00152521, 0.000205709, -0.00314123, 0.00102921,
                           0.000330318, 4.18952e-13]]
+
+            @testset "No InutUnits" begin
+                sxml = gzipped_read("irisws_XA_no_input_units.xml.gz")
+                @test sxml.network[1].station[1].channel[1].response.instrument_sensitivity.input_units === missing
+            end
         end
     end
 

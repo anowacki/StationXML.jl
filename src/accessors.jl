@@ -29,9 +29,21 @@ channels(sxml::FDSNStationXML) = collect(Iterators.flatten(channels(net) for net
 channels(net::Network) = collect(Iterators.flatten(channels(sta) for sta in net.station))
 channels(sta::Station) = sta.channel
 
-Base.getproperty(net::AbstractArray{Network}, f::Symbol) = getfield.(net, f)
-Base.getproperty(sta::AbstractArray{Station}, f::Symbol) = getfield.(sta, f)
-Base.getproperty(cha::AbstractArray{Channel}, f::Symbol) = getfield.(cha, f)
+# Julia v1.11 breaks the old way of using `getproperty` and we must
+# do this to keep it working; see https://github.com/JuliaLang/julia/issues/56100
+#
+# TODO: Remove this in next version bump because it is type-piracy.
+for T in (Network, Station, Channel)
+    for A in (AbstractArray, Array)
+        @eval function Base.getproperty(x::$A{$T}, f::Symbol)
+            if f in fieldnames(typeof(x))
+                getfield(x, f)
+            else
+                getproperty.(x, f)
+            end
+        end
+    end
+end
 
 """
     channel_codes(network) -> ::Vector{String}

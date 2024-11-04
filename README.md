@@ -193,6 +193,10 @@ a `FDSNStationXML` document or a `Network`.
 
 ### Dot-access to arrays of objects
 
+
+**Note: `getproperty` access for arrays of these objects is deprecated and will be
+removed in a future version.**
+
 The module defines `getproperty` methods for conveniently accessing the fields of each member
 of arrays of `Network`s, `Station`s and `Channel`s.  So our previous example of finding all
 the station codes could actually have been done like this:

@@ -21,7 +21,7 @@ For instance (using an example StationXML file supplied with this module):
 ```julia
 julia> using StationXML
 
-julia> sxml = StationXML.read(joinpath(dirname(pathof(StationXML)), "..", "data", "JSA.xml"))
+julia> sxml = StationXML.read(joinpath(dirname(pathof(StationXML)), "..", "test", "data", "JSA.xml"))
 StationXML.FDSNStationXML
   source: String "IRIS-DMC"
   sender: String "IRIS-DMC"
